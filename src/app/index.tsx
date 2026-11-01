@@ -1,98 +1,185 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// The opening animation (the "splash"). The order of events:
+//   1. White screen, the black ABBA mark fades in.
+//   2. A black panel grows down from the top and fills the screen; the mark turns white.
+//   3. The mark moves up a little and the ABBA name appears under it.
+//   4. A short pause, then we fade into the Welcome screen.
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  Animated,
+  Easing,
+  Image,
+  StyleSheet,
+  View,
+} from "react-native";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+import { colors, logo, logoRatio } from "@/theme";
+
+const MARK_WIDTH = 150;
+const MARK_HEIGHT = MARK_WIDTH / logoRatio.mark;
+const WORD_WIDTH = 210;
+const WORD_HEIGHT = WORD_WIDTH / logoRatio.wordmark;
+const GAP = 26;
+
+export default function Splash() {
+  const router = useRouter();
+
+  // These numbers are what the animation changes over time (0 to 1).
+  const [markIn] = useState(() => new Animated.Value(0));
+  const [panel] = useState(() => new Animated.Value(0));
+  const [nameIn] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    const animation = Animated.sequence([
+      // 1. Mark fades in
+      Animated.timing(markIn, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.delay(500),
+      // 2. Black panel grows down
+      Animated.timing(panel, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      // 3. Name appears, mark moves up
+      Animated.timing(nameIn, {
+        toValue: 1,
+        duration: 700,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      // 4. Pause
+      Animated.delay(900),
+    ]);
+
+    animation.start(({ finished }) => {
+      if (finished) {
+        router.replace("/welcome");
+      }
+    });
+
+    return () => animation.stop();
+  }, [markIn, panel, nameIn, router]);
+
+  // The mark starts in the middle of the screen, then moves up by this much
+  // to make room for the name.
+  const startOffset = (GAP + WORD_HEIGHT) / 2;
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={styles.screen}>
+      {/* Black panel that grows down from the top until it fills the screen */}
+      <Animated.View
+        style={[
+          styles.panel,
+          {
+            transformOrigin: "top",
+            transform: [{ scaleY: panel }],
+          },
+        ]}
+      />
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+      <View style={styles.center}>
+        {/* The mark: a black version and a white version stacked, we swap them */}
+        <Animated.View
+          style={{
+            width: MARK_WIDTH,
+            height: MARK_HEIGHT,
+            opacity: markIn,
+            transform: [
+              {
+                translateY: nameIn.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [startOffset, 0],
+                }),
+              },
+              {
+                scale: markIn.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.85, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <Animated.Image
+            source={logo.markBlack}
+            resizeMode="contain"
+            style={[
+              styles.fill,
+              {
+                opacity: panel.interpolate({
+                  inputRange: [0.35, 0.7],
+                  outputRange: [1, 0],
+                  extrapolate: "clamp",
+                }),
+              },
+            ]}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
+          <Animated.Image
+            source={logo.markWhite}
+            resizeMode="contain"
+            style={[
+              styles.fill,
+              {
+                opacity: panel.interpolate({
+                  inputRange: [0.35, 0.7],
+                  outputRange: [0, 1],
+                  extrapolate: "clamp",
+                }),
+              },
+            ]}
           />
-        </ThemedView>
+        </Animated.View>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        {/* The ABBA name */}
+        <Animated.View
+          style={{
+            marginTop: GAP,
+            opacity: nameIn,
+            transform: [
+              {
+                translateY: nameIn.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [14, 0],
+                }),
+              },
+            ],
+          }}
+        >
+          <Image
+            source={logo.wordmarkWhite}
+            resizeMode="contain"
+            style={{ width: WORD_WIDTH, height: WORD_HEIGHT }}
+          />
+        </Animated.View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: colors.white,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  panel: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.black,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  center: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  fill: {
+    ...StyleSheet.absoluteFill,
+    width: "100%",
+    height: "100%",
   },
 });
