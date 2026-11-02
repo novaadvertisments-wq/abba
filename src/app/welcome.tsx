@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
@@ -7,9 +7,6 @@ import { colors, logo, logoRatio, spacing, typography } from "@/theme";
 
 export default function Welcome() {
   const router = useRouter();
-
-  const comingSoon = () =>
-    Alert.alert("Coming soon", "Sign-up and login screens are built on Day 4.");
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -35,11 +32,29 @@ export default function Welcome() {
       </View>
 
       <View style={styles.bottom}>
-        <Button title="I'm a Business" onPress={comingSoon} />
-        <Button title="I'm a Nova" variant="secondary" onPress={comingSoon} />
-        <Pressable onPress={() => router.push("/preview")} hitSlop={12}>
-          <Text style={styles.link}>See design preview</Text>
-        </Pressable>
+        <Button title="Create account" onPress={() => router.push("/signup")} />
+        <Button
+          title="Log in"
+          variant="secondary"
+          onPress={() => router.push("/login")}
+        />
+      </View>
+
+      {/* TEMPORARY shortcuts for testing. We remove this box on Day 5,
+          when real login decides where each person goes. */}
+      <View style={styles.dev}>
+        <Text style={styles.devTitle}>Developer shortcuts (temporary)</Text>
+        <View style={styles.devRow}>
+          <Pressable onPress={() => router.push("/business/find")} hitSlop={10}>
+            <Text style={styles.devLink}>Business area</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push("/nova/requests")} hitSlop={10}>
+            <Text style={styles.devLink}>Nova area</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push("/preview")} hitSlop={10}>
+            <Text style={styles.devLink}>Design preview</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -72,14 +87,24 @@ const styles = StyleSheet.create({
   },
   bottom: {
     gap: spacing.md,
-    paddingBottom: spacing.lg,
     alignItems: "stretch",
   },
-  link: {
+  dev: {
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+  },
+  devTitle: {
+    ...typography.caption,
+    color: colors.gray400,
+  },
+  devRow: {
+    flexDirection: "row",
+    gap: spacing.lg,
+  },
+  devLink: {
     ...typography.label,
     color: colors.gray600,
-    textAlign: "center",
     textDecorationLine: "underline",
-    paddingTop: spacing.sm,
   },
 });
