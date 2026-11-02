@@ -1,18 +1,198 @@
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
+import { AuthFooter, AuthScreen } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
-import { PlaceholderScreen } from "@/components/PlaceholderScreen";
+import { Checkbox } from "@/components/Checkbox";
+import { ChoiceCard } from "@/components/ChoiceCard";
+import { PasswordField } from "@/components/PasswordField";
+import { TextField } from "@/components/TextField";
+import {
+  checkConfirm,
+  checkEmail,
+  checkName,
+  checkPassword,
+  checkPhone,
+} from "@/lib/validation";
+import { colors, typography } from "@/theme";
+
+type Role = "business" | "nova";
 
 export default function SignUp() {
   const router = useRouter();
 
+  // What the person has typed or chosen so far
+  const [role, setRole] = useState<Role | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [agreed, setAgreed] = useState(false);
+
+  // Messages shown under fields, and whether we are "sending"
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+
+  const nameLabel = role === "business" ? "Business name" : "Full name";
+
+  // Clears one field's error as soon as the person edits it
+  const clearError = (field: string) =>
+    setErrors((current) => ({ ...current, [field]: "" }));
+
+  const submit = () => {
+    const found = {
+      role: role ? "" : "Choose how you will use ABBA",
+      name: checkName(name, nameLabel),
+      email: checkEmail(email),
+      phone: checkPhone(phone),
+      password: checkPassword(password),
+      confirm: checkConfirm(password, confirm),
+      agreed: agreed ? "" : "You need to agree to continue",
+    };
+    setErrors(found);
+
+    if (Object.values(found).some((message) => message !== "")) {
+      return;
+    }
+
+    // DAY 5 will replace this pretend delay with real account creation.
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      router.replace(role === "business" ? "/business/find" : "/nova/requests");
+    }, 900);
+  };
+
   return (
-    <PlaceholderScreen
-      title="Create account"
-      description="Choose Business or Nova, then enter your details. The form is designed on Day 4."
-      day="Day 4"
+    <AuthScreen
+      title="Create your account"
+      subtitle="Tell us how you will use ABBA, then add your details."
     >
-      <Button title="Back" variant="secondary" onPress={() => router.back()} />
-    </PlaceholderScreen>
+      <View style={styles.group}>
+        <Text style={styles.groupLabel}>I am a...</Text>
+        <View style={styles.cardRow}>
+          <ChoiceCard
+            title="Business"
+            description="I want to advertise and hire Novas."
+            icon="storefront-outline"
+            selected={role === "business"}
+            onPress={() => {
+              setRole("business");
+              clearError("role");
+            }}
+          />
+          <ChoiceCard
+            title="Nova"
+            description="I want to earn by advertising on my social media."
+            icon="sparkles-outline"
+            selected={role === "nova"}
+            onPress={() => {
+              setRole("nova");
+              clearError("role");
+            }}
+          />
+        </View>
+        {!!errors.role && <Text style={styles.error}>{errors.role}</Text>}
+      </View>
+
+      <TextField
+        label={nameLabel}
+        placeholder={role === "business" ? "e.g. Legon Bites" : "e.g. Ama Mensah"}
+        autoCapitalize="words"
+        autoComplete="name"
+        value={name}
+        onChangeText={(text) => {
+          setName(text);
+          clearError("name");
+        }}
+        error={errors.name}
+      />
+      <TextField
+        label="Email"
+        placeholder="you@example.com"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="email"
+        value={email}
+        onChangeText={(text) => {
+          setEmail(text);
+          clearError("email");
+        }}
+        error={errors.email}
+      />
+      <TextField
+        label="Phone number"
+        placeholder="024 123 4567"
+        keyboardType="phone-pad"
+        autoComplete="tel"
+        value={phone}
+        onChangeText={(text) => {
+          setPhone(text);
+          clearError("phone");
+        }}
+        error={errors.phone}
+      />
+      <PasswordField
+        label="Password"
+        placeholder="At least 8 characters"
+        autoComplete="new-password"
+        value={password}
+        onChangeText={(text) => {
+          setPassword(text);
+          clearError("password");
+        }}
+        error={errors.password}
+      />
+      <PasswordField
+        label="Confirm password"
+        placeholder="Type it again"
+        autoComplete="new-password"
+        value={confirm}
+        onChangeText={(text) => {
+          setConfirm(text);
+          clearError("confirm");
+        }}
+        error={errors.confirm}
+      />
+
+      <Checkbox
+        checked={agreed}
+        onToggle={() => {
+          setAgreed((value) => !value);
+          clearError("agreed");
+        }}
+        label="I agree to the Terms of Use and Privacy Policy"
+        error={errors.agreed}
+      />
+
+      <Button title="Create account" onPress={submit} loading={loading} />
+
+      <AuthFooter
+        prompt="Already have an account?"
+        action="Log in"
+        onPress={() => router.replace("/login")}
+      />
+    </AuthScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  group: {
+    gap: 8,
+  },
+  groupLabel: {
+    ...typography.label,
+    color: colors.black,
+  },
+  cardRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  error: {
+    ...typography.caption,
+    color: colors.danger,
+  },
+});
