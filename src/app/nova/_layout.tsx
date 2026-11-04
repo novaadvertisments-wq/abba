@@ -1,11 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 
 import { useTabBarOptions } from "@/components/useTabBarOptions";
+import { homeFor, useAuth } from "@/lib/auth";
 
 // The Nova area: four tabs along the bottom.
 export default function NovaLayout() {
   const options = useTabBarOptions();
+  const { status, profile } = useAuth();
+
+  // Only the right kind of logged-in person may enter this area.
+  if (status === "loading") return null;
+  if (status === "signedOut") return <Redirect href="/welcome" />;
+  if (profile?.role !== "nova") return <Redirect href={homeFor(profile)} />;
 
   return (
     <Tabs screenOptions={options}>

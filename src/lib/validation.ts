@@ -33,3 +33,46 @@ export function checkConfirm(password: string, confirm: string): string {
   if (!confirm) return "Type your password again";
   return password !== confirm ? "The passwords do not match" : "";
 }
+
+// ---- Nova profile checks ----
+
+// Handles on Instagram, TikTok, X and so on: letters, numbers, dots and
+// underscores. A leading "@" is allowed and ignored.
+export function cleanHandle(value: string): string {
+  return value.trim().replace(/^@+/, "");
+}
+
+export function checkHandle(value: string, platform: string): string {
+  if (platform === "whatsapp") return checkPhone(value);
+  const handle = cleanHandle(value);
+  if (!handle) return "Enter your handle or page name";
+  if (!/^[A-Za-z0-9._]{2,40}$/.test(handle)) {
+    return "Use 2 to 40 letters, numbers, dots or underscores";
+  }
+  return "";
+}
+
+// Followers are typed as a plain number. Commas and spaces are ignored.
+export function parseFollowers(value: string): number | null {
+  const digits = value.replace(/[\s,]/g, "");
+  if (!/^\d{1,10}$/.test(digits)) return null;
+  const n = Number(digits);
+  return n <= 1_000_000_000 ? n : null;
+}
+
+export function checkFollowers(value: string): string {
+  if (!value.trim()) return "Enter your number of followers";
+  return parseFollowers(value) === null ? "Enter a whole number, like 5400" : "";
+}
+
+export function checkViews(value: string): string {
+  if (!value.trim()) return "Enter your usual number of views";
+  return parseFollowers(value) === null ? "Enter a whole number, like 1200" : "";
+}
+
+// 5400 -> "5.4K", 1200000 -> "1.2M"
+export function shortNumber(n: number): string {
+  if (n >= 1_000_000) return `${+(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${+(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}

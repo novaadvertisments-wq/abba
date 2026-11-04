@@ -1,12 +1,19 @@
-import { useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Redirect, useRouter } from "expo-router";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
+import { homeFor, useAuth } from "@/lib/auth";
 import { colors, logo, logoRatio, spacing, typography } from "@/theme";
 
 export default function Welcome() {
   const router = useRouter();
+  const { status, profile } = useAuth();
+
+  // Already logged in? Go straight to the right part of the app.
+  if (status === "signedIn") {
+    return <Redirect href={homeFor(profile)} />;
+  }
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -26,7 +33,7 @@ export default function Welcome() {
       <View style={styles.middle}>
         <Text style={styles.title}>Advertise with people who are verified.</Text>
         <Text style={styles.subtitle}>
-          Find social-media advertisers near you, agree a price and pay safely.
+          Post your price, get offers from verified Novas, and pay safely.
           Payment is released only after the campaign is verified.
         </Text>
       </View>
@@ -38,23 +45,6 @@ export default function Welcome() {
           variant="secondary"
           onPress={() => router.push("/login")}
         />
-      </View>
-
-      {/* TEMPORARY shortcuts for testing. We remove this box on Day 5,
-          when real login decides where each person goes. */}
-      <View style={styles.dev}>
-        <Text style={styles.devTitle}>Developer shortcuts (temporary)</Text>
-        <View style={styles.devRow}>
-          <Pressable onPress={() => router.push("/business/find")} hitSlop={10}>
-            <Text style={styles.devLink}>Business area</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push("/nova/requests")} hitSlop={10}>
-            <Text style={styles.devLink}>Nova area</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push("/preview")} hitSlop={10}>
-            <Text style={styles.devLink}>Design preview</Text>
-          </Pressable>
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -88,23 +78,6 @@ const styles = StyleSheet.create({
   bottom: {
     gap: spacing.md,
     alignItems: "stretch",
-  },
-  dev: {
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-  },
-  devTitle: {
-    ...typography.caption,
-    color: colors.gray400,
-  },
-  devRow: {
-    flexDirection: "row",
-    gap: spacing.lg,
-  },
-  devLink: {
-    ...typography.label,
-    color: colors.gray600,
-    textDecorationLine: "underline",
+    paddingBottom: spacing.lg,
   },
 });

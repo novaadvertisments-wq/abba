@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 
+import { homeFor, useAuth } from "@/lib/auth";
 import { colors, logo, logoRatio } from "@/theme";
 
 const MARK_WIDTH = 150;
@@ -24,6 +25,8 @@ const GAP = 26;
 
 export default function Splash() {
   const router = useRouter();
+  const { status, profile } = useAuth();
+  const [animationDone, setAnimationDone] = useState(false);
 
   // These numbers are what the animation changes over time (0 to 1).
   const [markIn] = useState(() => new Animated.Value(0));
@@ -60,12 +63,20 @@ export default function Splash() {
 
     animation.start(({ finished }) => {
       if (finished) {
-        router.replace("/welcome");
+        setAnimationDone(true);
       }
     });
 
     return () => animation.stop();
-  }, [markIn, panel, nameIn, router]);
+  }, [markIn, panel, nameIn]);
+
+  // When the animation is over AND we know whether someone is already
+  // logged in, move on: straight into the app, or to the Welcome screen.
+  useEffect(() => {
+    if (animationDone && status !== "loading") {
+      router.replace(status === "signedIn" ? homeFor(profile) : "/welcome");
+    }
+  }, [animationDone, status, profile, router]);
 
   // The mark starts in the middle of the screen, then moves up by this much
   // to make room for the name.

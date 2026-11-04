@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -6,8 +6,11 @@ import { AuthFooter, AuthScreen } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
 import { Checkbox } from "@/components/Checkbox";
 import { ChoiceCard } from "@/components/ChoiceCard";
+import { FormMessage } from "@/components/FormMessage";
 import { PasswordField } from "@/components/PasswordField";
 import { TextField } from "@/components/TextField";
+import { homeFor, useAuth } from "@/lib/auth";
+import { signUp } from "@/lib/authActions";
 import {
   checkConfirm,
   checkEmail,
@@ -17,10 +20,11 @@ import {
 } from "@/lib/validation";
 import { colors, typography } from "@/theme";
 
-type Role = "business" | "nova";
+import type { Role } from "@/lib/auth";
 
 export default function SignUp() {
   const router = useRouter();
+  const { status, profile } = useAuth();
 
   // What the person has typed or chosen so far
   const [role, setRole] = useState<Role | null>(null);
@@ -34,6 +38,8 @@ export default function SignUp() {
   // Messages shown under fields, and whether we are "sending"
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const nameLabel = role === "business" ? "Business name" : "Full name";
 
@@ -41,7 +47,9 @@ export default function SignUp() {
   const clearError = (field: string) =>
     setErrors((current) => ({ ...current, [field]: "" }));
 
-  const submit = () => {
+  const submit = async () => {
+    setFormError("");
+    setNotice("");
     const found = {
       role: role ? "" : "Choose how you will use ABBA",
       name: checkName(name, nameLabel),
@@ -57,13 +65,33 @@ export default function SignUp() {
       return;
     }
 
-    // DAY 5 will replace this pretend delay with real account creation.
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.replace(role === "business" ? "/business/find" : "/nova/requests");
-    }, 900);
+    const result = await signUp({
+      email,
+      password,
+      fullName: name,
+      phone,
+      role: role as Role,
+    });
+    setLoading(false);
+
+    if (!result.ok) {
+      setFormError(result.message);
+      return;
+    }
+    if (result.needsConfirmation) {
+      setNotice(
+        "Account created. We sent a link to your email. Open it to confirm, then log in.",
+      );
+    }
+    // Otherwise the person is now logged in, and the redirect below
+    // takes them into the app.
   };
+
+  // Already logged in? Go straight to the right part of the app.
+  if (status === "signedIn") {
+    return <Redirect href={homeFor(profile)} />;
+  }
 
   return (
     <AuthScreen
@@ -167,6 +195,9 @@ export default function SignUp() {
         label="I agree to the Terms of Use and Privacy Policy"
         error={errors.agreed}
       />
+
+      <FormMessage message={formError} />
+      <FormMessage message={notice} tone="info" />
 
       <Button title="Create account" onPress={submit} loading={loading} />
 

@@ -1,26 +1,32 @@
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text } from "react-native";
 
 import { AuthFooter, AuthScreen } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
+import { FormMessage } from "@/components/FormMessage";
 import { PasswordField } from "@/components/PasswordField";
 import { TextField } from "@/components/TextField";
+import { homeFor, useAuth } from "@/lib/auth";
+import { logIn } from "@/lib/authActions";
 import { checkEmail } from "@/lib/validation";
 import { colors, typography } from "@/theme";
 
 export default function Login() {
   const router = useRouter();
+  const { status, profile } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const clearError = (field: string) =>
     setErrors((current) => ({ ...current, [field]: "" }));
 
-  const submit = () => {
+  const submit = async () => {
+    setFormError("");
     const found = {
       email: checkEmail(email),
       password: password ? "" : "Enter your password",
@@ -31,13 +37,20 @@ export default function Login() {
       return;
     }
 
-    // DAY 5 will replace this with real login.
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert("Almost there", "Real login is connected on Day 5.");
-    }, 900);
+    const result = await logIn(email, password);
+    setLoading(false);
+
+    if (!result.ok) {
+      setFormError(result.message);
+    }
+    // On success the redirect below takes the person into the app.
   };
+
+  // Already logged in? Go straight to the right part of the app.
+  if (status === "signedIn") {
+    return <Redirect href={homeFor(profile)} />;
+  }
 
   return (
     <AuthScreen
@@ -79,6 +92,8 @@ export default function Login() {
       >
         <Text style={styles.forgotText}>Forgot password?</Text>
       </Pressable>
+
+      <FormMessage message={formError} />
 
       <Button title="Log in" onPress={submit} loading={loading} />
 
