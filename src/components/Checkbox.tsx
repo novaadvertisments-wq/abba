@@ -26,7 +26,7 @@ export function Checkbox({ checked, onToggle, label, error }: Props) {
             !!error && !checked && styles.boxError,
           ]}
         >
-          {checked && <Ionicons name="checkmark" size={18} color={colors.white} />}
+          {checked && <Ionicons name="checkmark" size={18} color={colors.onAccent} />}
         </View>
         <Text style={styles.label}>{label}</Text>
       </Pressable>
@@ -49,14 +49,14 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: colors.gray400,
+    borderColor: colors.textFaint,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceRaised,
   },
   boxChecked: {
-    backgroundColor: colors.black,
-    borderColor: colors.black,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   boxError: {
     borderColor: colors.danger,
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   label: {
     ...typography.body,
     fontSize: 15,
-    color: colors.gray600,
+    color: colors.textMuted,
     flex: 1,
     lineHeight: 21,
   },

@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors, logo, logoRatio, spacing, typography } from "@/theme";
+import { GraffitiBackground } from "@/components/GraffitiBackground";
+import { colors, logo, logoRatio, spacing, textOnArt, typography } from "@/theme";
 
 type Props = {
   title: string;
@@ -34,6 +35,7 @@ export function AuthScreen({ title, subtitle, children }: Props) {
   };
 
   return (
+    <GraffitiBackground variant="auth" strength={0.85}>
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
@@ -49,10 +51,10 @@ export function AuthScreen({ title, subtitle, children }: Props) {
               accessibilityLabel="Go back"
               style={styles.back}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.black} />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </Pressable>
             <Image
-              source={logo.markBlack}
+              source={logo.markWhite}
               resizeMode="contain"
               style={{ width: 40, height: 40 / logoRatio.mark }}
             />
@@ -65,6 +67,7 @@ export function AuthScreen({ title, subtitle, children }: Props) {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </GraffitiBackground>
   );
 }
 
@@ -92,7 +95,7 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: "transparent",
   },
   content: {
     padding: spacing.lg,
@@ -112,12 +115,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
+    ...textOnArt,
     ...typography.title,
-    color: colors.black,
+    color: colors.text,
   },
   subtitle: {
+    ...textOnArt,
     ...typography.body,
-    color: colors.gray600,
+    color: colors.textMuted,
     lineHeight: 24,
     marginTop: spacing.sm,
   },
@@ -134,12 +139,12 @@ const styles = StyleSheet.create({
   footerText: {
     ...typography.body,
     fontSize: 15,
-    color: colors.gray600,
+    color: colors.textMuted,
   },
   footerLink: {
     ...typography.label,
     fontSize: 15,
-    color: colors.black,
+    color: colors.text,
     textDecorationLine: "underline",
   },
 });

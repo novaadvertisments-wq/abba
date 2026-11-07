@@ -6,6 +6,7 @@ export default function BusinessCampaigns() {
       title="Campaigns"
       description="Track each campaign from payment to completion."
       day="Day 11"
+      art="campaigns"
     />
   );
 }

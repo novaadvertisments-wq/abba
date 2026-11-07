@@ -20,7 +20,7 @@ export function Chip({ label, selected, onPress, disabled }: Props) {
       accessibilityState={{ selected, disabled }}
       style={[styles.chip, selected && styles.selected, disabled && styles.disabled]}
     >
-      <Text style={[styles.text, { color: selected ? colors.white : colors.black }]}>{label}</Text>
+      <Text style={[styles.text, { color: selected ? colors.onAccent : colors.text }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -29,14 +29,14 @@ const styles = StyleSheet.create({
   chip: {
     borderRadius: radius.pill,
     borderWidth: 1.5,
-    borderColor: colors.gray200,
-    backgroundColor: colors.white,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   selected: {
-    backgroundColor: colors.black,
-    borderColor: colors.black,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   disabled: {
     opacity: 0.4,

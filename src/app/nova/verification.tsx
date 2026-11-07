@@ -6,6 +6,7 @@ export default function NovaVerification() {
       title="Verification"
       description="Submit your screenshots here during the seven-day check and at campaign checkpoints."
       day="Days 12 to 14"
+      art="verify"
     />
   );
 }

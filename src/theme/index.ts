@@ -1,15 +1,29 @@
 // ABBA design system: one place that defines how the whole app looks.
+// A graffiti wallpaper, charcoal cards, white text, one soft aqua accent.
 // Change a value here and every screen updates.
 
 export const colors = {
-  black: "#0A0A0A",
-  white: "#FFFFFF",
-  gray50: "#FAFAFA",
-  gray100: "#F4F4F5",
-  gray200: "#E4E4E7",
-  gray400: "#A1A1AA",
-  gray600: "#52525B",
-  danger: "#B42318",
+  background: "#000000", // behind the wallpaper
+  surface: "rgba(28, 31, 33, 0.82)", // cards: dark charcoal, slightly see-through
+  surfaceRaised: "rgba(54, 58, 61, 0.88)", // text boxes and chips sitting on a card
+  skeleton: "rgba(255, 255, 255, 0.10)", // the shapes shown while loading
+  border: "rgba(255, 255, 255, 0.10)",
+  borderStrong: "rgba(255, 255, 255, 0.24)",
+  text: "#FFFFFF", // main text: white, for strong contrast
+  textMuted: "#B9C7C9", // softer text
+  textFaint: "#93B1B5", // hints inside text boxes
+  icon: "#FFFFFF", // simple white icons
+  iconMuted: "rgba(255, 255, 255, 0.55)", // icons that are not active
+  accent: "#B8E3E9", // buttons and highlights
+  onAccent: "#000000", // text and icons placed on top of the accent
+  danger: "#FF8A80", // errors only
+  dangerBg: "rgba(60, 20, 18, 0.88)",
+};
+
+// Colours for the opening animation.
+export const palette = {
+  light: "#B8E3E9",
+  black: "#000000",
 };
 
 export const spacing = {
@@ -49,4 +63,22 @@ export const logo = {
 export const logoRatio = {
   mark: 399 / 333,
   wordmark: 624 / 141,
+};
+
+// Background wallpapers: one for each part of the app. They are already dark
+// and quiet, so they only ever act as a background.
+export const art = {
+  auth: require("../assets/graffiti/graffiti-auth.jpg"),
+  home: require("../assets/graffiti/graffiti-home.jpg"),
+  campaigns: require("../assets/graffiti/graffiti-campaigns.jpg"),
+  verify: require("../assets/graffiti/graffiti-verify.jpg"),
+  profile: require("../assets/graffiti/graffiti-profile.jpg"),
+};
+export type ArtName = keyof typeof art;
+
+// A soft dark halo for text that sits directly on the graffiti.
+export const textOnArt = {
+  textShadowColor: "#000000",
+  textShadowRadius: 8,
+  textShadowOffset: { width: 0, height: 1 },
 };

@@ -112,6 +112,6 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     ...typography.label,
-    color: colors.gray600,
+    color: colors.textMuted,
   },
 });

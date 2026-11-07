@@ -6,6 +6,7 @@ export default function NovaCampaigns() {
       title="Campaigns"
       description="Your active and finished campaigns, and your payouts."
       day="Day 11"
+      art="campaigns"
     />
   );
 }

@@ -76,3 +76,35 @@ export function shortNumber(n: number): string {
   if (n >= 1_000) return `${+(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
+
+export function checkBusinessName(value: string): string {
+  const v = value.trim();
+  if (v.length < 2) return "Enter your business name";
+  if (v.length > 60) return "Keep the name under 60 characters";
+  return "";
+}
+
+export function checkDescription(value: string): string {
+  return value.trim().length > 280 ? "Keep it under 280 characters" : "";
+}
+
+export function checkOfferTitle(value: string): string {
+  const v = value.trim();
+  if (v.length < 3) return "Give your offer a short title";
+  if (v.length > 60) return "Keep the title under 60 characters";
+  return "";
+}
+
+export function parseBudget(value: string): number | null {
+  const v = value.replace(/[,\s]/g, "");
+  if (!/^\d+$/.test(v)) return null;
+  return Number(v);
+}
+
+export function checkBudget(value: string): string {
+  const n = parseBudget(value);
+  if (n === null) return "Enter your budget in cedis, numbers only";
+  if (n < 5) return "The smallest budget is GHS 5";
+  if (n > 100000) return "The largest budget is GHS 100,000";
+  return "";
+}

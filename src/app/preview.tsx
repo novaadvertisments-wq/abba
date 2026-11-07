@@ -66,7 +66,7 @@ export default function Preview() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
@@ -74,25 +74,25 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.title,
-    color: colors.black,
+    color: colors.text,
   },
   section: {
     ...typography.heading,
-    color: colors.black,
+    color: colors.text,
     marginTop: spacing.md,
   },
   cardTitle: {
     ...typography.heading,
-    color: colors.black,
+    color: colors.text,
   },
   cardText: {
     ...typography.body,
-    color: colors.gray600,
+    color: colors.textMuted,
     marginTop: 4,
   },
   cardPrice: {
     alignSelf: "flex-start",
-    backgroundColor: colors.black,
+    backgroundColor: colors.accent,
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -100,6 +100,6 @@ const styles = StyleSheet.create({
   },
   cardPriceText: {
     ...typography.label,
-    color: colors.white,
+    color: colors.onAccent,
   },
 });

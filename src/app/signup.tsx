@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   groupLabel: {
     ...typography.label,
-    color: colors.black,
+    color: colors.text,
   },
   cardRow: {
     flexDirection: "row",

@@ -2,9 +2,10 @@ import { Redirect, useRouter } from "expo-router";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { GraffitiBackground } from "@/components/GraffitiBackground";
 import { Button } from "@/components/Button";
 import { homeFor, useAuth } from "@/lib/auth";
-import { colors, logo, logoRatio, spacing, typography } from "@/theme";
+import { colors, logo, logoRatio, spacing, textOnArt, typography } from "@/theme";
 
 export default function Welcome() {
   const router = useRouter();
@@ -16,15 +17,16 @@ export default function Welcome() {
   }
 
   return (
+    <GraffitiBackground variant="auth" strength={1}>
     <SafeAreaView style={styles.screen}>
       <View style={styles.top}>
         <Image
-          source={logo.markBlack}
+          source={logo.markWhite}
           resizeMode="contain"
           style={{ width: 110, height: 110 / logoRatio.mark }}
         />
         <Image
-          source={logo.wordmarkBlack}
+          source={logo.wordmarkWhite}
           resizeMode="contain"
           style={{ width: 130, height: 130 / logoRatio.wordmark }}
         />
@@ -47,13 +49,14 @@ export default function Welcome() {
         />
       </View>
     </SafeAreaView>
+    </GraffitiBackground>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: "transparent",
     paddingHorizontal: spacing.lg,
   },
   top: {
@@ -67,12 +70,14 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   title: {
+    ...textOnArt,
     ...typography.title,
-    color: colors.black,
+    color: colors.text,
   },
   subtitle: {
+    ...textOnArt,
     ...typography.body,
-    color: colors.gray600,
+    color: colors.textMuted,
     lineHeight: 24,
   },
   bottom: {

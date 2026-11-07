@@ -31,7 +31,7 @@ export function PasswordField(props: Props) {
           <Ionicons
             name={visible ? "eye-off-outline" : "eye-outline"}
             size={22}
-            color={colors.gray600}
+            color={colors.iconMuted}
           />
         </Pressable>
       }

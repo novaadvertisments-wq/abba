@@ -10,12 +10,12 @@ export function useTabBarOptions() {
 
   return {
     headerShown: false,
-    tabBarActiveTintColor: colors.black,
-    tabBarInactiveTintColor: colors.gray400,
+    tabBarActiveTintColor: colors.icon,
+    tabBarInactiveTintColor: colors.iconMuted,
     tabBarLabelStyle: { fontSize: 12, fontWeight: "600" as const },
     tabBarStyle: {
-      backgroundColor: colors.white,
-      borderTopColor: colors.gray200,
+      backgroundColor: "#0A0B0B",
+      borderTopColor: colors.border,
       borderTopWidth: 1,
       height: 68 + insets.bottom,
       paddingTop: 6,

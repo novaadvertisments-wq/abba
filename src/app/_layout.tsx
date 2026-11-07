@@ -8,12 +8,12 @@ export default function RootLayout() {
   return (
     // AuthProvider lets every screen know who is logged in
     <AuthProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,
           animation: "fade",
-          contentStyle: { backgroundColor: colors.white },
+          contentStyle: { backgroundColor: colors.background },
         }}
       />
     </AuthProvider>

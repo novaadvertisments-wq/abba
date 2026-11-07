@@ -34,7 +34,9 @@ export function TextField({
             setFocused(false);
             inputProps.onBlur?.(e);
           }}
-          placeholderTextColor={colors.gray400}
+          placeholderTextColor={colors.textFaint}
+          keyboardAppearance="dark"
+          selectionColor={colors.accent}
           style={[
             styles.input,
             !!rightElement && styles.inputWithRight,
@@ -57,24 +59,24 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.label,
-    color: colors.black,
+    color: colors.text,
   },
   input: {
     minHeight: 54,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: colors.gray200,
-    backgroundColor: colors.gray50,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: colors.black,
+    color: colors.text,
   },
   inputWithRight: {
     paddingRight: 52,
   },
   inputFocused: {
-    borderColor: colors.black,
-    backgroundColor: colors.white,
+    borderColor: colors.accent,
+    backgroundColor: colors.surface,
   },
   inputError: {
     borderColor: colors.danger,

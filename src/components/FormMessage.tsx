@@ -15,7 +15,7 @@ export function FormMessage({ message, tone = "error" }: Props) {
   const isError = tone === "error";
   return (
     <View style={[styles.box, isError ? styles.errorBox : styles.infoBox]}>
-      <Text style={[styles.text, { color: isError ? colors.danger : colors.black }]}>
+      <Text style={[styles.text, { color: isError ? colors.danger : colors.text }]}>
         {message}
       </Text>
     </View>
@@ -31,11 +31,11 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     borderColor: colors.danger,
-    backgroundColor: "#FEF3F2",
+    backgroundColor: colors.dangerBg,
   },
   infoBox: {
-    borderColor: colors.black,
-    backgroundColor: colors.gray50,
+    borderColor: colors.accent,
+    backgroundColor: colors.surfaceRaised,
   },
   text: {
     ...typography.body,

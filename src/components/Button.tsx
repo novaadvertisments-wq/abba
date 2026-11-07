@@ -43,12 +43,12 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.white : colors.black} />
+        <ActivityIndicator color={isPrimary ? colors.onAccent : colors.text} />
       ) : (
         <Text
           style={[
             styles.text,
-            { color: isPrimary ? colors.white : colors.black },
+            { color: isPrimary ? colors.onAccent : colors.text },
           ]}
         >
           {title}
@@ -68,12 +68,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   primary: {
-    backgroundColor: colors.black,
-    borderColor: colors.black,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   secondary: {
-    backgroundColor: colors.white,
-    borderColor: colors.black,
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
   },
   pressed: {
     opacity: 0.8,

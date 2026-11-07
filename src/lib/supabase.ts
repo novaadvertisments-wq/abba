@@ -2,9 +2,10 @@
 // system). The two values come from the file called .env.local in the main
 // project folder.
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
+
+import { sessionStorage } from "./sessionStorage";
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_KEY;
@@ -18,9 +19,10 @@ export const supabase = createClient(
   isSupabaseConfigured ? key! : "not-set-up",
   {
     auth: {
-      // Keeps people logged in after they close the app
-      // (Skipped while the web version is being pre-built on a computer, where there is no browser storage.)
-      storage: typeof window === "undefined" ? undefined : AsyncStorage,
+      // Keeps people logged in after they close the app, in the phone's
+      // encrypted storage. (Skipped while the web version is being pre-built
+      // on a computer, where there is no storage at all.)
+      storage: typeof window === "undefined" ? undefined : sessionStorage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,

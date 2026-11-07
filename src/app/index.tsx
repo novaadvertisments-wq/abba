@@ -15,7 +15,7 @@ import {
 } from "react-native";
 
 import { homeFor, useAuth } from "@/lib/auth";
-import { colors, logo, logoRatio } from "@/theme";
+import { art, logo, logoRatio, palette } from "@/theme";
 
 const MARK_WIDTH = 150;
 const MARK_HEIGHT = MARK_WIDTH / logoRatio.mark;
@@ -93,6 +93,13 @@ export default function Splash() {
             transform: [{ scaleY: panel }],
           },
         ]}
+      />
+
+      {/* The doodles fade in over the black panel together with the name */}
+      <Animated.Image
+        source={art.auth}
+        resizeMode="cover"
+        style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", opacity: nameIn.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }) }]}
       />
 
       <View style={styles.center}>
@@ -177,11 +184,11 @@ export default function Splash() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: palette.light,
   },
   panel: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: colors.black,
+    backgroundColor: palette.black,
   },
   center: {
     ...StyleSheet.absoluteFill,

@@ -40,6 +40,7 @@ export type NovaAccount = {
 export type NovaProfileData = {
   city: string;
   area: string;
+  multiPlatform: boolean;
   accounts: NovaAccount[];
 };
 
@@ -51,7 +52,7 @@ export async function loadNovaProfile(
 ): Promise<({ ok: true } & NovaProfileData) | Failure> {
   try {
     const [p, a] = await Promise.all([
-      supabase.from("nova_profiles").select("city, area").eq("id", userId).maybeSingle(),
+      supabase.from("nova_profiles").select("city, area, multi_platform").eq("id", userId).maybeSingle(),
       supabase
         .from("nova_accounts")
         .select("id, platform, handle, followers, avg_views, verified")
@@ -63,6 +64,7 @@ export async function loadNovaProfile(
       ok: true,
       city: p.data?.city ?? "",
       area: p.data?.area ?? "",
+      multiPlatform: p.data?.multi_platform ?? false,
       accounts: (a.data ?? []) as NovaAccount[],
     };
   } catch {
@@ -136,6 +138,26 @@ export async function removeAccount(id: string): Promise<{ ok: true } | Failure>
   try {
     const { error } = await supabase.from("nova_accounts").delete().eq("id", id);
     return error ? FAIL : { ok: true };
+  } catch {
+    return FAIL;
+  }
+}
+
+// Whether this Nova accepts offers that need several platforms at once.
+export async function saveMultiPlatform(
+  userId: string,
+  value: boolean,
+): Promise<{ ok: true } | Failure> {
+  try {
+    const upd = await supabase
+      .from("nova_profiles")
+      .update({ multi_platform: value, updated_at: new Date().toISOString() })
+      .eq("id", userId)
+      .select("id");
+    if (upd.error) return FAIL;
+    if (upd.data && upd.data.length > 0) return { ok: true };
+    const ins = await supabase.from("nova_profiles").insert({ id: userId, multi_platform: value });
+    return ins.error ? FAIL : { ok: true };
   } catch {
     return FAIL;
   }

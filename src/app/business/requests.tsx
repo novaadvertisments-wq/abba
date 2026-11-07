@@ -6,6 +6,7 @@ export default function BusinessRequests() {
       title="Requests"
       description="Your advertising requests and price negotiations will appear here."
       day="Day 10"
+      art="verify"
     />
   );
 }

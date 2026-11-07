@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,8 +12,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { Checkbox } from "@/components/Checkbox";
 import { Chip } from "@/components/Chip";
+import { GraffitiBackground } from "@/components/GraffitiBackground";
 import { FormMessage } from "@/components/FormMessage";
+import { Skeleton, SkeletonCard } from "@/components/Skeleton";
 import { TextField } from "@/components/TextField";
 import { useAuth } from "@/lib/auth";
 import { logOut } from "@/lib/authActions";
@@ -28,6 +30,7 @@ import {
   platformLabel,
   removeAccount,
   saveLocation,
+  saveMultiPlatform,
   updateAccount,
 } from "@/lib/novaProfile";
 import {
@@ -38,7 +41,7 @@ import {
   parseFollowers,
   shortNumber,
 } from "@/lib/validation";
-import { colors, spacing, typography } from "@/theme";
+import { colors, radius, spacing, textOnArt, typography } from "@/theme";
 
 export default function NovaProfile() {
   const { profile, email } = useAuth();
@@ -53,6 +56,8 @@ export default function NovaProfile() {
   const [otherCity, setOtherCity] = useState("");
   const [area, setArea] = useState("");
   const [savedLocation, setSavedLocation] = useState(false);
+  const [multi, setMulti] = useState(false);
+  const [multiError, setMultiError] = useState("");
   const [locError, setLocError] = useState("");
   const [locNotice, setLocNotice] = useState("");
   const [locSaving, setLocSaving] = useState(false);
@@ -83,6 +88,7 @@ export default function NovaProfile() {
     setOtherCity(result.city && !known ? result.city : "");
     setArea(result.area);
     setSavedLocation(!!result.city);
+    setMulti(result.multiPlatform);
     setLoading(false);
   }, [userId]);
 
@@ -108,6 +114,17 @@ export default function NovaProfile() {
     }
     setSavedLocation(true);
     setLocNotice("Location saved.");
+  };
+
+  const onToggleMulti = async () => {
+    const next = !multi;
+    setMulti(next);
+    setMultiError("");
+    const result = await saveMultiPlatform(userId, next);
+    if (!result.ok) {
+      setMulti(!next);
+      setMultiError(result.message);
+    }
   };
 
   const openAddForm = () => {
@@ -185,6 +202,7 @@ export default function NovaProfile() {
   const platformMeta = PLATFORMS.find((p) => p.id === platform);
 
   return (
+    <GraffitiBackground variant="profile" strength={0.85}>
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
@@ -198,7 +216,20 @@ export default function NovaProfile() {
           </Text>
 
           {loading ? (
-            <ActivityIndicator color={colors.black} style={{ marginTop: spacing.xl }} />
+            <View style={styles.gap} accessibilityLabel="Loading your profile">
+              <SkeletonCard lines={3} />
+              <Skeleton width="60%" height={22} style={{ marginTop: spacing.sm }} />
+              <View style={styles.chips}>
+                {[78, 92, 84, 96, 108, 64].map((w, i) => (
+                  <Skeleton key={i} width={w} height={42} rounded={radius.pill} />
+                ))}
+              </View>
+              <Skeleton height={54} rounded={radius.md} />
+              <Skeleton height={54} rounded={radius.pill} />
+              <Skeleton width="55%" height={22} style={{ marginTop: spacing.md }} />
+              <SkeletonCard lines={1} />
+              <SkeletonCard lines={1} />
+            </View>
           ) : loadError ? (
             <View style={styles.gap}>
               <FormMessage message={loadError} />
@@ -254,6 +285,22 @@ export default function NovaProfile() {
               <FormMessage message={locNotice} tone="info" />
               <Button title="Save location" variant="secondary" loading={locSaving} onPress={onSaveLocation} />
 
+              {/* Offer types */}
+              <Text style={[styles.heading, { marginTop: spacing.md }]}>Which offers do you want?</Text>
+              <Card style={styles.progress}>
+                <Checkbox
+                  checked={multi}
+                  onToggle={onToggleMulti}
+                  label="I also accept multi-platform offers"
+                />
+                <Text style={styles.hint}>
+                  You always see single-platform offers on the accounts you add. Multi-platform offers
+                  ask you to post on several platforms for one price, so they only reach you if you turn
+                  this on and have every platform listed.
+                </Text>
+                <FormMessage message={multiError} />
+              </Card>
+
               {/* Accounts */}
               <Text style={[styles.heading, { marginTop: spacing.md }]}>Your social accounts</Text>
               <Text style={styles.hint}>
@@ -276,7 +323,7 @@ export default function NovaProfile() {
                       avg views · {a.verified ? "Verified" : "Not verified yet"}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.gray400} />
+                  <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
                 </Card>
               ))}
 
@@ -375,6 +422,7 @@ export default function NovaProfile() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </GraffitiBackground>
   );
 }
 
@@ -384,34 +432,34 @@ function Check({ done, text }: { done: boolean; text: string }) {
       <Ionicons
         name={done ? "checkmark-circle" : "ellipse-outline"}
         size={20}
-        color={done ? colors.black : colors.gray400}
+        color={done ? colors.icon : colors.iconMuted}
       />
-      <Text style={[styles.checkText, done && { color: colors.black }]}>{text}</Text>
+      <Text style={[styles.checkText, done && { color: colors.text }]}>{text}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.white },
+  screen: { flex: 1 },
   flex: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
-  title: { ...typography.title, color: colors.black, marginTop: spacing.md },
-  signedIn: { ...typography.caption, color: colors.gray600 },
-  heading: { ...typography.heading, color: colors.black },
-  label: { ...typography.label, color: colors.black },
-  hint: { ...typography.caption, color: colors.gray600, lineHeight: 18 },
+  title: { ...textOnArt, ...typography.title, color: colors.text, marginTop: spacing.md },
+  signedIn: { ...textOnArt, ...typography.caption, color: colors.textMuted },
+  heading: { ...textOnArt, ...typography.heading, color: colors.text },
+  label: { ...typography.label, color: colors.text },
+  hint: { ...textOnArt, ...typography.caption, color: colors.textMuted, lineHeight: 18 },
   gap: { gap: spacing.sm },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  progress: { gap: spacing.sm, backgroundColor: colors.gray50 },
+  progress: { gap: spacing.sm, backgroundColor: colors.surfaceRaised },
   checkRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  checkText: { ...typography.body, color: colors.gray600 },
-  reach: { ...typography.label, color: colors.black, marginTop: spacing.xs },
+  checkText: { ...typography.body, color: colors.textMuted },
+  reach: { ...typography.label, color: colors.accent, marginTop: spacing.xs },
   accountCard: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-  accountName: { ...typography.label, color: colors.black },
-  accountHandle: { ...typography.caption, color: colors.gray600 },
+  accountName: { ...typography.label, color: colors.text },
+  accountHandle: { ...typography.caption, color: colors.textMuted },
   accountRight: { alignItems: "flex-end" },
-  accountFollowers: { ...typography.heading, color: colors.black },
-  accountStatus: { ...typography.caption, color: colors.gray600, fontSize: 12 },
+  accountFollowers: { ...typography.heading, color: colors.accent },
+  accountStatus: { ...typography.caption, color: colors.textMuted, fontSize: 12 },
   form: { gap: spacing.md },
   error: { ...typography.caption, color: colors.danger },
   remove: { alignItems: "center", paddingVertical: spacing.sm },

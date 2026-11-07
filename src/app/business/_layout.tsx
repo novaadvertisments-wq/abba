@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 
+import { ScreenSkeleton } from "@/components/Skeleton";
 import { useTabBarOptions } from "@/components/useTabBarOptions";
 import { homeFor, useAuth } from "@/lib/auth";
 
@@ -11,7 +12,7 @@ export default function BusinessLayout() {
   const { status, profile } = useAuth();
 
   // Only the right kind of logged-in person may enter this area.
-  if (status === "loading") return null;
+  if (status === "loading") return <ScreenSkeleton />;
   if (status === "signedOut") return <Redirect href="/welcome" />;
   if (profile?.role !== "business") return <Redirect href={homeFor(profile)} />;
 

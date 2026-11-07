@@ -27,13 +27,13 @@ export function Card({ children, onPress, style }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.gray200,
+    borderColor: colors.border,
     padding: 18,
   },
   pressed: {
-    backgroundColor: colors.gray50,
+    backgroundColor: colors.surfaceRaised,
   },
 });
