@@ -44,6 +44,16 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
         {r.nova_city ? ` · ${r.nova_city}` : ""}
       </Text>
       {!!r.accounts && <Text style={styles.meta}>{r.accounts}</Text>}
+      <Text style={styles.meta}>
+        {r.nova_views
+          ? `Typical views: ${shortNumber(r.nova_views)} per post${r.views_verified ? "" : " (not verified yet)"}`
+          : "Typical views: not given yet"}
+      </Text>
+      {!!r.nova_views && r.nova_views < r.offer_target_views * 0.5 && r.status !== "agreed" && (
+        <Text style={styles.warn}>
+          You asked for about {shortNumber(r.offer_target_views)} views. This Nova usually gets fewer.
+        </Text>
+      )}
 
       {r.status === "pending_business" && (
         <>
@@ -81,6 +91,7 @@ const styles = StyleSheet.create({
   row: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.md, backgroundColor: "rgba(255,255,255,0.06)", marginTop: spacing.sm },
   name: { ...typography.label, color: colors.text },
   meta: { ...typography.caption, color: colors.textMuted },
+  warn: { ...typography.caption, color: "#FFB347" },
   ask: { ...typography.label, color: colors.accent, marginTop: spacing.xs },
   wait: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
   good: { ...typography.label, color: colors.accent, marginTop: spacing.xs },

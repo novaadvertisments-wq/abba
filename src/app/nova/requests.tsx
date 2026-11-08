@@ -11,6 +11,7 @@ import { GraffitiBackground } from "@/components/GraffitiBackground";
 import { SkeletonCard } from "@/components/Skeleton";
 import { FeedOffer, loadFeed, respond } from "@/lib/negotiation";
 import { platformLabel } from "@/lib/novaProfile";
+import { pingBadges } from "@/lib/attention";
 import { MAX_COUNTERS } from "@/lib/pricing";
 import { shortNumber } from "@/lib/validation";
 import { colors, spacing, textOnArt, typography } from "@/theme";
@@ -20,6 +21,7 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const s = offer.neg_status;
   const price = offer.last_price ?? offer.budget_ghs;
   const used = offer.counters ?? 0;
   const left = MAX_COUNTERS - used;
@@ -41,11 +43,11 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
     return "";
   };
 
-  const s = offer.neg_status;
   const canAnswer = offer.offer_status === "open" && (s === null || s === "pending_nova");
 
   return (
     <Card style={styles.offer}>
+      {s === null && offer.offer_status === "open" && <Text style={styles.newTag}>NEW</Text>}
       <View style={styles.top}>
         <Text style={[styles.offerTitle, styles.flex]}>{offer.title}</Text>
         <Text style={styles.price}>GHS {shortNumber(price)}</Text>
@@ -109,11 +111,15 @@ export default function NovaRequests() {
     }
     setLoading(false);
     setRefreshing(false);
+    pingBadges();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
+      // Look again every 30 seconds while this screen is showing.
+      const timer = setInterval(refresh, 30000);
+      return () => clearInterval(timer);
     }, [refresh]),
   );
 
@@ -164,6 +170,7 @@ const styles = StyleSheet.create({
   hint: { ...textOnArt, ...typography.caption, color: colors.textMuted, lineHeight: 18 },
   gap: { gap: spacing.sm },
   offer: { gap: spacing.xs },
+  newTag: { ...typography.caption, color: colors.accent, fontWeight: "700", letterSpacing: 1 },
   top: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   offerTitle: { ...typography.label, color: colors.text },
   price: { ...typography.heading, color: colors.accent },

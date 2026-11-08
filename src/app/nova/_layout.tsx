@@ -3,12 +3,15 @@ import { Redirect, Tabs } from "expo-router";
 
 import { ScreenSkeleton } from "@/components/Skeleton";
 import { useTabBarOptions } from "@/components/useTabBarOptions";
+import { useAttentionCount } from "@/lib/attention";
 import { homeFor, useAuth } from "@/lib/auth";
+import { colors } from "@/theme";
 
 // The Nova area: four tabs along the bottom.
 export default function NovaLayout() {
   const options = useTabBarOptions();
   const { status, profile } = useAuth();
+  const count = useAttentionCount("nova", status === "signedIn" && profile?.role === "nova");
 
   // Only the right kind of logged-in person may enter this area.
   if (status === "loading") return <ScreenSkeleton />;
@@ -21,6 +24,8 @@ export default function NovaLayout() {
         name="requests"
         options={{
           title: "Requests",
+          tabBarBadge: count > 0 ? count : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.onAccent },
           tabBarIcon: ({ color }) => (
             <Ionicons name="chatbubbles-outline" size={22} color={color} />
           ),

@@ -1,5 +1,5 @@
-import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -13,6 +13,7 @@ import { Radar } from "@/components/Radar";
 import { ResponseRow } from "@/components/ResponseRow";
 import { SkeletonCard } from "@/components/Skeleton";
 import { TextField } from "@/components/TextField";
+import { pingBadges } from "@/lib/attention";
 import { useAuth } from "@/lib/auth";
 import { loadBusinessProfile } from "@/lib/businessProfile";
 import { CITIES, PLATFORMS, platformLabel } from "@/lib/novaProfile";
@@ -38,7 +39,11 @@ export default function FindNovas() {
   const { profile } = useAuth();
   const userId = profile?.id ?? "";
 
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("list");
+  const modeRef = useRef<Mode>("list");
+  modeRef.current = mode;
+  const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -77,8 +82,12 @@ export default function FindNovas() {
     setLoadError("");
     setOffers(o.offers);
     if (rs.ok) setResponses(rs.responses);
-    if (p.ok) setProfileCity(p.city);
+    if (p.ok) {
+      setProfileCity(p.city);
+      setProfileComplete(!!(p.business_name && p.category && p.city));
+    }
     setLoading(false);
+    pingBadges();
   }, [userId]);
 
   useEffect(() => {
@@ -89,6 +98,11 @@ export default function FindNovas() {
   useFocusEffect(
     useCallback(() => {
       refresh();
+      // Look again every 30 seconds, but never while the person is typing a new offer.
+      const timer = setInterval(() => {
+        if (modeRef.current === "list") refresh();
+      }, 30000);
+      return () => clearInterval(timer);
     }, [refresh]),
   );
 
@@ -390,7 +404,17 @@ export default function FindNovas() {
                 <Text style={styles.hint}>
                   Post an open offer with your price. Novas who match can accept it or counter.
                 </Text>
-                <Button title="Post an offer" onPress={openForm} />
+                {profileComplete === false ? (
+                  <Card style={styles.recommend}>
+                    <Text style={styles.heading}>Finish your business profile first</Text>
+                    <Text style={styles.hint}>
+                      Novas need to see who is asking. Add your business name, category and city on your Profile.
+                    </Text>
+                    <Button title="Go to my profile" onPress={() => router.push("/business/profile")} />
+                  </Card>
+                ) : (
+                  <Button title="Post an offer" onPress={openForm} disabled={profileComplete === null} />
+                )}
 
                 <Text style={[styles.heading, { marginTop: spacing.md }]}>Your offers</Text>
                 {loading ? (

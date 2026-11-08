@@ -35,6 +35,7 @@ export type NovaAccount = {
   followers: number;
   avg_views: number;
   verified: boolean;
+  multi_ok: boolean; // ticked for multi-platform offers
 };
 
 export type NovaProfileData = {
@@ -55,7 +56,7 @@ export async function loadNovaProfile(
       supabase.from("nova_profiles").select("city, area, multi_platform").eq("id", userId).maybeSingle(),
       supabase
         .from("nova_accounts")
-        .select("id, platform, handle, followers, avg_views, verified")
+        .select("id, platform, handle, followers, avg_views, verified, multi_ok")
         .eq("user_id", userId)
         .order("created_at", { ascending: true }),
     ]);
@@ -128,6 +129,16 @@ export async function updateAccount(
       .from("nova_accounts")
       .update({ handle, followers, avg_views: avgViews })
       .eq("id", id);
+    return error ? FAIL : { ok: true };
+  } catch {
+    return FAIL;
+  }
+}
+
+// Tick or untick one account for multi-platform offers.
+export async function setAccountMulti(id: string, value: boolean): Promise<{ ok: true } | Failure> {
+  try {
+    const { error } = await supabase.from("nova_accounts").update({ multi_ok: value }).eq("id", id);
     return error ? FAIL : { ok: true };
   } catch {
     return FAIL;

@@ -92,3 +92,38 @@ export async function logOut(): Promise<void> {
     await supabase.auth.signOut({ scope: "local" });
   }
 }
+
+// Forgot password, step 1: email a 6-digit code. We always report success for a
+// well-formed email, so nobody can use this to find out who has an account.
+export async function sendResetCode(email: string): Promise<Result> {
+  if (!isSupabaseConfigured) return { ok: false, message: NOT_SET_UP };
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+    if (error) return { ok: false, message: friendly(error.message) };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: friendly(String(e)) };
+  }
+}
+
+// Forgot password, step 2: check the code, then set the new password.
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<Result> {
+  if (!isSupabaseConfigured) return { ok: false, message: NOT_SET_UP };
+  try {
+    const verified = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: "recovery",
+    });
+    if (verified.error) {
+      const text = verified.error.message.toLowerCase();
+      if (text.includes("network") || text.includes("fetch")) return { ok: false, message: friendly(text) };
+      return { ok: false, message: "That code is wrong or has expired. Ask for a new one." };
+    }
+    const updated = await supabase.auth.updateUser({ password: newPassword });
+    if (updated.error) return { ok: false, message: friendly(updated.error.message) };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: friendly(String(e)) };
+  }
+}

@@ -37,6 +37,10 @@ export type Response = {
   counters: number;
   agreed_price: number | null;
   updated_at: string;
+  offer_status: "open" | "closed" | "agreed";
+  offer_target_views: number;
+  nova_views: number | null; // typical views per post, as the Nova declared them
+  views_verified: boolean;
 };
 
 type Failure = { ok: false; message: string };

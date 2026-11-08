@@ -108,3 +108,7 @@ export function checkBudget(value: string): string {
   if (n > 100000) return "The largest budget is GHS 100,000";
   return "";
 }
+
+export function checkResetCode(value: string): string {
+  return /^\d{6,8}$/.test(value.trim()) ? "" : "Enter the code from your email (numbers only)";
+}

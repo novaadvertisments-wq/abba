@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 import { AuthFooter, AuthScreen } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
@@ -84,9 +84,7 @@ export default function Login() {
       />
 
       <Pressable
-        onPress={() =>
-          Alert.alert("Coming soon", "Password reset is added later.")
-        }
+        onPress={() => router.push("/forgot-password")}
         hitSlop={10}
         style={styles.forgot}
       >

@@ -31,6 +31,7 @@ import {
   removeAccount,
   saveLocation,
   saveMultiPlatform,
+  setAccountMulti,
   updateAccount,
 } from "@/lib/novaProfile";
 import {
@@ -123,6 +124,17 @@ export default function NovaProfile() {
     const result = await saveMultiPlatform(userId, next);
     if (!result.ok) {
       setMulti(!next);
+      setMultiError(result.message);
+    }
+  };
+
+  const onTickAccount = async (a: NovaAccount) => {
+    const next = !a.multi_ok;
+    setAccounts((list) => list.map((x) => (x.id === a.id ? { ...x, multi_ok: next } : x)));
+    setMultiError("");
+    const result = await setAccountMulti(a.id, next);
+    if (!result.ok) {
+      setAccounts((list) => list.map((x) => (x.id === a.id ? { ...x, multi_ok: !next } : x)));
       setMultiError(result.message);
     }
   };
@@ -296,8 +308,32 @@ export default function NovaProfile() {
                 <Text style={styles.hint}>
                   You always see single-platform offers on the accounts you add. Multi-platform offers
                   ask you to post on several platforms for one price, so they only reach you if you turn
-                  this on and have every platform listed.
+                  this on and tick every platform they ask for.
                 </Text>
+                {multi && (
+                  <>
+                    <Text style={styles.heading}>I will do multi-platform offers on</Text>
+                    {accounts.length === 0 ? (
+                      <Text style={styles.hint}>Add your social accounts below first, then tick them here.</Text>
+                    ) : (
+                      <View style={styles.chips}>
+                        {accounts.map((a) => (
+                          <Chip
+                            key={a.id}
+                            label={platformLabel(a.platform)}
+                            selected={a.multi_ok}
+                            onPress={() => onTickAccount(a)}
+                          />
+                        ))}
+                      </View>
+                    )}
+                    {accounts.length > 0 && accounts.filter((a) => a.multi_ok).length < 2 && (
+                      <Text style={styles.hint}>
+                        Tick at least two platforms, or no multi-platform offers can reach you.
+                      </Text>
+                    )}
+                  </>
+                )}
                 <FormMessage message={multiError} />
               </Card>
 
