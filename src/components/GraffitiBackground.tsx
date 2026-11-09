@@ -25,6 +25,8 @@ export function GraffitiBackground({ children, variant = "auth", strength = 1 }:
         />
       </View>
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tabTint[variant] }]} />
+      {/* The login pictures are bright and colourful, so they get a dark veil to keep the words easy to read. */}
+      {variant === "auth" && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.58)" }]} />}
       {children}
     </View>
   );

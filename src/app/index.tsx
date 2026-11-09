@@ -1,8 +1,9 @@
 // The opening animation (the "splash"). The order of events:
-//   1. White screen, the black ABBA mark fades in.
-//   2. A black panel grows down from the top and fills the screen; the mark turns white.
-//   3. The mark moves up a little and the ABBA name appears under it.
-//   4. A short pause, then we fade into the Welcome screen.
+//   1. The first graffiti picture (Kwame Nkrumah Memorial) fades in from black, slowly
+//      zooming, and the white ABBA mark fades in on top.
+//   2. The picture melts into the second one (the lighthouse, which is also the
+//      login background) while the mark moves up and the ABBA name appears.
+//   3. A short pause, then we go on to the Welcome screen.
 
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -15,7 +16,7 @@ import {
 } from "react-native";
 
 import { homeFor, useAuth } from "@/lib/auth";
-import { art, logo, logoRatio, palette } from "@/theme";
+import { art, logo, logoRatio, splashFirst } from "@/theme";
 
 const MARK_WIDTH = 150;
 const MARK_HEIGHT = MARK_WIDTH / logoRatio.mark;
@@ -29,46 +30,51 @@ export default function Splash() {
   const [animationDone, setAnimationDone] = useState(false);
 
   // These numbers are what the animation changes over time (0 to 1).
-  const [markIn] = useState(() => new Animated.Value(0));
-  const [panel] = useState(() => new Animated.Value(0));
+  const [firstIn] = useState(() => new Animated.Value(0)); // first picture + mark
+  const [zoom] = useState(() => new Animated.Value(0)); // slow zoom, runs the whole time
+  const [melt] = useState(() => new Animated.Value(0)); // first picture -> second picture
   const [nameIn] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
+    const zooming = Animated.timing(zoom, {
+      toValue: 1,
+      duration: 4600,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    });
     const animation = Animated.sequence([
-      // 1. Mark fades in
-      Animated.timing(markIn, {
+      Animated.timing(firstIn, {
         toValue: 1,
-        duration: 800,
+        duration: 900,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.delay(500),
-      // 2. Black panel grows down
-      Animated.timing(panel, {
+      Animated.delay(900),
+      Animated.timing(melt, {
         toValue: 1,
         duration: 900,
         easing: Easing.inOut(Easing.cubic),
         useNativeDriver: true,
       }),
-      // 3. Name appears, mark moves up
       Animated.timing(nameIn, {
         toValue: 1,
         duration: 700,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      // 4. Pause
       Animated.delay(900),
     ]);
 
+    zooming.start();
     animation.start(({ finished }) => {
-      if (finished) {
-        setAnimationDone(true);
-      }
+      if (finished) setAnimationDone(true);
     });
 
-    return () => animation.stop();
-  }, [markIn, panel, nameIn]);
+    return () => {
+      zooming.stop();
+      animation.stop();
+    };
+  }, [firstIn, zoom, melt, nameIn]);
 
   // When the animation is over AND we know whether someone is already
   // logged in, move on: straight into the app, or to the Welcome screen.
@@ -81,78 +87,45 @@ export default function Splash() {
   // The mark starts in the middle of the screen, then moves up by this much
   // to make room for the name.
   const startOffset = (GAP + WORD_HEIGHT) / 2;
+  const scale = zoom.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
 
   return (
     <View style={styles.screen}>
-      {/* Black panel that grows down from the top until it fills the screen */}
-      <Animated.View
-        style={[
-          styles.panel,
-          {
-            transformOrigin: "top",
-            transform: [{ scaleY: panel }],
-          },
-        ]}
-      />
-
-      {/* The doodles fade in over the black panel together with the name */}
+      {/* Second picture sits underneath; the first one melts away on top of it */}
       <Animated.Image
         source={art.auth}
         resizeMode="cover"
-        style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", opacity: nameIn.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }) }]}
+        style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", transform: [{ scale }] }]}
       />
+      <Animated.Image
+        source={splashFirst}
+        resizeMode="cover"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            width: "100%",
+            height: "100%",
+            opacity: Animated.multiply(firstIn, melt.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })),
+            transform: [{ scale }],
+          },
+        ]}
+      />
+      {/* A dark veil keeps the white logo easy to see on the bright pictures */}
+      <View pointerEvents="none" style={styles.veil} />
 
       <View style={styles.center}>
-        {/* The mark: a black version and a white version stacked, we swap them */}
         <Animated.View
           style={{
             width: MARK_WIDTH,
             height: MARK_HEIGHT,
-            opacity: markIn,
+            opacity: firstIn,
             transform: [
-              {
-                translateY: nameIn.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [startOffset, 0],
-                }),
-              },
-              {
-                scale: markIn.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.85, 1],
-                }),
-              },
+              { translateY: nameIn.interpolate({ inputRange: [0, 1], outputRange: [startOffset, 0] }) },
+              { scale: firstIn.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) },
             ],
           }}
         >
-          <Animated.Image
-            source={logo.markBlack}
-            resizeMode="contain"
-            style={[
-              styles.fill,
-              {
-                opacity: panel.interpolate({
-                  inputRange: [0.35, 0.7],
-                  outputRange: [1, 0],
-                  extrapolate: "clamp",
-                }),
-              },
-            ]}
-          />
-          <Animated.Image
-            source={logo.markWhite}
-            resizeMode="contain"
-            style={[
-              styles.fill,
-              {
-                opacity: panel.interpolate({
-                  inputRange: [0.35, 0.7],
-                  outputRange: [0, 1],
-                  extrapolate: "clamp",
-                }),
-              },
-            ]}
-          />
+          <Image source={logo.markWhite} resizeMode="contain" style={styles.fill} />
         </Animated.View>
 
         {/* The ABBA name */}
@@ -160,21 +133,10 @@ export default function Splash() {
           style={{
             marginTop: GAP,
             opacity: nameIn,
-            transform: [
-              {
-                translateY: nameIn.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [14, 0],
-                }),
-              },
-            ],
+            transform: [{ translateY: nameIn.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
           }}
         >
-          <Image
-            source={logo.wordmarkWhite}
-            resizeMode="contain"
-            style={{ width: WORD_WIDTH, height: WORD_HEIGHT }}
-          />
+          <Image source={logo.wordmarkWhite} resizeMode="contain" style={{ width: WORD_WIDTH, height: WORD_HEIGHT }} />
         </Animated.View>
       </View>
     </View>
@@ -184,11 +146,12 @@ export default function Splash() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: palette.light,
+    backgroundColor: "#000000",
+    overflow: "hidden",
   },
-  panel: {
+  veil: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: palette.black,
+    backgroundColor: "rgba(0,0,0,0.58)",
   },
   center: {
     ...StyleSheet.absoluteFill,

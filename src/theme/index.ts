@@ -115,13 +115,16 @@ export const logoRatio = {
 // Background wallpapers: one for each part of the app. They are already dark
 // and quiet, so they only ever act as a background.
 export const art = {
-  auth: require("../assets/graffiti/graffiti-auth.jpg"),
+  auth: require("../assets/graffiti/splash-lighthouse.jpg"), // login, welcome and sign-up
   home: require("../assets/graffiti/graffiti-home.jpg"),
   campaigns: require("../assets/graffiti/graffiti-campaigns.jpg"),
   verify: require("../assets/graffiti/graffiti-verify.jpg"),
   profile: require("../assets/graffiti/graffiti-profile.jpg"),
 };
 export type ArtName = keyof typeof art;
+
+// The first picture of the opening animation (the second one is art.auth).
+export const splashFirst = require("../assets/graffiti/splash-nkrumah.jpg");
 
 // A soft dark halo for text that sits directly on the graffiti.
 export const textOnArt = {
