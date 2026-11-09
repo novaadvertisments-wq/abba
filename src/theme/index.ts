@@ -20,6 +20,53 @@ export const colors = {
   dangerBg: "rgba(60, 20, 18, 0.88)",
 };
 
+// Day 9e: meaning colours. No green, no confetti, red only for errors.
+// Colour is never the only signal: every coloured thing also has words.
+
+// Nova tiers (rings around profile pictures and tier labels).
+export const tiers = {
+  spark: { label: "Spark", color: "#FFE27A" },
+  glow: { label: "Glow", color: "#FFB347" },
+  blaze: { label: "Blaze", color: "#FF6FAE" },
+  radiant: { label: "Radiant", color: "#B388FF" },
+  supernova: { label: "Supernova", color: "#B8E3E9" },
+};
+export type TierName = keyof typeof tiers;
+
+// What state an offer or a deal is in.
+export const statusColors = {
+  open: "#B8E3E9", // open, aqua
+  waiting: "#FFB347", // waiting for someone, amber
+  agreed: "#FFD66B", // deal agreed, gold
+  closed: "#8A9496", // closed or declined, grey
+};
+export type StatusKind = keyof typeof statusColors;
+
+// Money is always gold.
+export const gold = "#FFD66B";
+
+// A colour for each kind of business.
+export const categoryColors: Record<string, string> = {
+  food: "#FFB347",
+  fashion: "#FF8FC0",
+  beauty: "#C9A7FF",
+  events: "#9B7BFF",
+  tech: "#7CC4FF",
+  retail: "#FFE27A",
+  services: "#5FD1C4",
+  education: "#9DB8FF",
+  other: "#A3ADAF",
+};
+
+// A very faint wash of colour over each tab's wallpaper.
+export const tabTint = {
+  auth: "transparent",
+  home: "rgba(184, 227, 233, 0.07)", // aqua
+  campaigns: "rgba(255, 179, 71, 0.07)", // amber
+  verify: "rgba(179, 136, 255, 0.07)", // violet
+  profile: "rgba(255, 111, 174, 0.06)", // pink
+};
+
 // Colours for the opening animation.
 export const palette = {
   light: "#B8E3E9",

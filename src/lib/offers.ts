@@ -15,6 +15,7 @@ export type Offer = {
   target_views: number;
   kind: "single" | "multi";
   post_within_days: number;
+  duration_days: number;
   status: "open" | "closed" | "agreed";
   created_at: string;
 };
@@ -29,6 +30,7 @@ export type NewOffer = {
   recommended_ghs: number;
   kind: "single" | "multi";
   post_within_days: number;
+  duration_days: number;
 };
 
 type Failure = { ok: false; message: string };
@@ -38,7 +40,7 @@ export async function loadOffers(userId: string): Promise<{ ok: true; offers: Of
   try {
     const { data, error } = await supabase
       .from("offers")
-      .select("id, title, description, budget_ghs, platforms, city, target_views, kind, post_within_days, status, created_at")
+      .select("id, title, description, budget_ghs, platforms, city, target_views, kind, post_within_days, duration_days, status, created_at")
       .eq("business_id", userId)
       .order("created_at", { ascending: false });
     if (error) return FAIL;

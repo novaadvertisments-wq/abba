@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { FormMessage } from "@/components/FormMessage";
 import { GraffitiBackground } from "@/components/GraffitiBackground";
+import { ProfileHeader } from "@/components/ProfileHeader";
 import { Skeleton, SkeletonCard } from "@/components/Skeleton";
 import { TextField } from "@/components/TextField";
 import { useAuth } from "@/lib/auth";
@@ -15,7 +16,7 @@ import { logOut } from "@/lib/authActions";
 import { CATEGORIES, loadBusinessProfile, saveBusinessProfile } from "@/lib/businessProfile";
 import { CITIES } from "@/lib/novaProfile";
 import { checkBusinessName, checkDescription } from "@/lib/validation";
-import { colors, radius, spacing, textOnArt, typography } from "@/theme";
+import { categoryColors, colors, radius, spacing, textOnArt, typography } from "@/theme";
 
 export default function BusinessProfile() {
   const { profile, email } = useAuth();
@@ -110,6 +111,12 @@ export default function BusinessProfile() {
             <Text style={styles.signedIn}>
               {profile?.full_name} ({email})
             </Text>
+            <ProfileHeader
+              userId={userId}
+              name={name || profile?.full_name || ""}
+              ring={categoryColors[category] ?? colors.accent}
+              subtitle={CATEGORIES.find((c) => c.id === category)?.label}
+            />
 
             {loading ? (
               <View style={styles.gap} accessibilityLabel="Loading your profile">

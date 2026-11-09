@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Image, StyleSheet, View } from "react-native";
 
-import { ArtName, art, colors } from "@/theme";
+import { ArtName, art, colors, tabTint } from "@/theme";
 
 type Props = {
   children: ReactNode;
@@ -24,6 +24,7 @@ export function GraffitiBackground({ children, variant = "auth", strength = 1 }:
           importantForAccessibility="no-hide-descendants"
         />
       </View>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tabTint[variant] }]} />
       {children}
     </View>
   );

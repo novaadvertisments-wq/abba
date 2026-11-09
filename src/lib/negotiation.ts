@@ -14,6 +14,7 @@ export type FeedOffer = {
   target_views: number;
   kind: "single" | "multi";
   post_within_days: number;
+  duration_days: number;
   created_at: string;
   business_name: string;
   offer_status: "open" | "closed" | "agreed";
@@ -22,6 +23,8 @@ export type FeedOffer = {
   last_by: "nova" | "business" | null;
   counters: number | null;
   agreed_price: number | null;
+  business_category: string;
+  business_avatar: string; // a stored path; turn it into an address with pictureUrl()
 };
 
 export type Response = {
@@ -41,6 +44,7 @@ export type Response = {
   offer_target_views: number;
   nova_views: number | null; // typical views per post, as the Nova declared them
   views_verified: boolean;
+  nova_avatar: string;
 };
 
 type Failure = { ok: false; message: string };

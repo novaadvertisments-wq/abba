@@ -7,7 +7,10 @@ import { FormMessage } from "@/components/FormMessage";
 import { Response, respond } from "@/lib/negotiation";
 import { MAX_COUNTERS } from "@/lib/pricing";
 import { shortNumber } from "@/lib/validation";
-import { colors, radius, spacing, typography } from "@/theme";
+import { Avatar } from "@/components/Avatar";
+import { pictureUrl } from "@/lib/pictures";
+import { StatusPill } from "@/components/StatusPill";
+import { colors, gold, radius, spacing, statusColors, tiers, typography } from "@/theme";
 
 // One Nova's answer to one of your offers, with the buttons to reply.
 export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => void }) {
@@ -39,10 +42,13 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
 
   return (
     <View style={styles.row}>
-      <Text style={styles.name}>
-        {who}
-        {r.nova_city ? ` · ${r.nova_city}` : ""}
-      </Text>
+      <View style={styles.who}>
+        <Avatar uri={pictureUrl(r.nova_avatar)} name={who} size={40} ring={tiers.spark.color} />
+        <Text style={[styles.name, styles.whoText]}>
+          {who}
+          {r.nova_city ? ` · ${r.nova_city}` : ""}
+        </Text>
+      </View>
       {!!r.accounts && <Text style={styles.meta}>{r.accounts}</Text>}
       <Text style={styles.meta}>
         {r.nova_views
@@ -57,6 +63,7 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
 
       {r.status === "pending_business" && (
         <>
+          <StatusPill kind="waiting" label="Needs your answer" />
           <Text style={styles.ask}>
             {r.counters > 0 && r.last_by === "nova" ? `${who} asks for GHS ${shortNumber(r.last_price)}` : `${who} wants GHS ${shortNumber(r.last_price)}`}
           </Text>
@@ -76,9 +83,11 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
           {countering && <CounterBox onSend={sendCounter} onCancel={() => setCountering(false)} initial={String(r.last_price)} />}
         </>
       )}
+      {r.status === "pending_nova" && <StatusPill kind="waiting" label="Waiting for the Nova" />}
       {r.status === "pending_nova" && (
         <Text style={styles.wait}>You offered GHS {shortNumber(r.last_price)}. Waiting for {who}.</Text>
       )}
+      {r.status === "agreed" && <StatusPill kind="agreed" label="Deal agreed" />}
       {r.status === "agreed" && (
         <Text style={styles.good}>Deal agreed with {who} at GHS {shortNumber(r.agreed_price ?? r.last_price)}.</Text>
       )}
@@ -89,12 +98,14 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
 
 const styles = StyleSheet.create({
   row: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.md, backgroundColor: "rgba(255,255,255,0.06)", marginTop: spacing.sm },
+  who: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  whoText: { flex: 1 },
   name: { ...typography.label, color: colors.text },
   meta: { ...typography.caption, color: colors.textMuted },
-  warn: { ...typography.caption, color: "#FFB347" },
-  ask: { ...typography.label, color: colors.accent, marginTop: spacing.xs },
+  warn: { ...typography.caption, color: statusColors.waiting },
+  ask: { ...typography.label, color: gold, marginTop: spacing.xs },
   wait: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
-  good: { ...typography.label, color: colors.accent, marginTop: spacing.xs },
+  good: { ...typography.label, color: gold, marginTop: spacing.xs },
   actions: { gap: spacing.sm, marginTop: spacing.xs },
   link: { ...typography.label, color: colors.textMuted, textDecorationLine: "underline", textAlign: "center" },
 });

@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/Checkbox";
 import { Chip } from "@/components/Chip";
 import { GraffitiBackground } from "@/components/GraffitiBackground";
 import { FormMessage } from "@/components/FormMessage";
+import { ProfileHeader } from "@/components/ProfileHeader";
 import { Skeleton, SkeletonCard } from "@/components/Skeleton";
 import { TextField } from "@/components/TextField";
 import { useAuth } from "@/lib/auth";
@@ -42,7 +43,7 @@ import {
   parseFollowers,
   shortNumber,
 } from "@/lib/validation";
-import { colors, radius, spacing, textOnArt, typography } from "@/theme";
+import { colors, radius, spacing, textOnArt, tiers, typography } from "@/theme";
 
 export default function NovaProfile() {
   const { profile, email } = useAuth();
@@ -226,6 +227,7 @@ export default function NovaProfile() {
           <Text style={styles.signedIn}>
             {profile?.full_name} ({email})
           </Text>
+          <ProfileHeader userId={profile?.id ?? ""} name={profile?.full_name ?? ""} ring={tiers.spark.color} subtitle={`${tiers.spark.label} Nova`} />
 
           {loading ? (
             <View style={styles.gap} accessibilityLabel="Loading your profile">

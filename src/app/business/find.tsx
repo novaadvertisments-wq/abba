@@ -27,9 +27,10 @@ import {
   loadOffers,
 } from "@/lib/offers";
 import { Response, loadResponses } from "@/lib/negotiation";
-import { LUMEN_OPTIONS, OfferKind, POST_WITHIN_OPTIONS, recommendPrice, viewsFor } from "@/lib/pricing";
+import { LUMEN_OPTIONS, OfferKind, DURATION_OPTIONS, POST_WITHIN_OPTIONS, durationLabel, recommendPrice, viewsFor } from "@/lib/pricing";
 import { checkBudget, checkDescription, checkOfferTitle, parseBudget, shortNumber } from "@/lib/validation";
-import { colors, radius, spacing, textOnArt, typography } from "@/theme";
+import { StatusPill } from "@/components/StatusPill";
+import { colors, gold, radius, spacing, textOnArt, typography } from "@/theme";
 
 type Mode = "list" | "form" | "searching";
 
@@ -49,6 +50,7 @@ export default function FindNovas() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
   const [postWithin, setPostWithin] = useState(7);
+  const [duration, setDuration] = useState(1);
   const [profileCity, setProfileCity] = useState("");
 
   // Form
@@ -112,6 +114,7 @@ export default function FindNovas() {
     setBudget("");
     setKind("");
     setPostWithin(7);
+    setDuration(1);
     setLumens(null);
     setPlatforms([]);
     const known = CITIES.slice(0, -1).includes(profileCity);
@@ -122,12 +125,12 @@ export default function FindNovas() {
     setMode("form");
   };
 
-  const recommended = lumens && kind ? recommendPrice(lumens, kind, platforms.length) : 0;
+  const recommended = lumens && kind ? recommendPrice(lumens, kind, platforms.length, duration) : 0;
 
   // Whenever the reach, type or platforms change, suggest a new price
   // (the business can still type its own).
-  const suggest = (l: number | null, k: OfferKind | "", count: number) => {
-    if (l && k) setBudget(String(recommendPrice(l, k, count)));
+  const suggest = (l: number | null, k: OfferKind | "", count: number, d: number = duration) => {
+    if (l && k) setBudget(String(recommendPrice(l, k, count, d)));
   };
 
   const chooseKind = (k: OfferKind) => {
@@ -188,6 +191,7 @@ export default function FindNovas() {
       recommended_ghs: recommended,
       kind: kind as OfferKind,
       post_within_days: postWithin,
+      duration_days: duration,
     });
     setSaving(false);
     if (!result.ok) {
@@ -369,6 +373,23 @@ export default function FindNovas() {
                     <Chip key={d} label={`Within ${d} days`} selected={postWithin === d} onPress={() => setPostWithin(d)} />
                   ))}
                 </View>
+                <Text style={styles.heading}>How long should it stay up?</Text>
+                <Text style={styles.hint}>
+                  Longer adverts cost more. Stories disappear after 24 hours, so for a story the Nova will re-post or pin it.
+                </Text>
+                <View style={styles.chips}>
+                  {DURATION_OPTIONS.map((d) => (
+                    <Chip
+                      key={d}
+                      label={durationLabel(d)}
+                      selected={duration === d}
+                      onPress={() => {
+                        setDuration(d);
+                        suggest(lumens, kind, platforms.length, d);
+                      }}
+                    />
+                  ))}
+                </View>
                 <Text style={styles.hint}>
                   Ambassador deals, for adverts that run from 1 to 12 months, are coming later.
                 </Text>
@@ -441,11 +462,12 @@ export default function FindNovas() {
                       <Text style={styles.meta}>
                         {o.kind === "multi" ? "Several platforms: " : ""}{o.platforms.map(platformLabel).join(", ")} · {shortNumber(o.target_views)} views · {o.city || "Anywhere in Ghana"}
                       </Text>
-                      <Text style={styles.meta}>One-time post, within {o.post_within_days} days</Text>
+                      <Text style={styles.meta}>One-time post, within {o.post_within_days} days, stays up {durationLabel(o.duration_days)}</Text>
                       <View style={styles.offerBottom}>
-                        <Text style={[styles.status, o.status !== "closed" && { color: colors.accent }]}>
-                          {o.status === "open" ? "Open" : o.status === "agreed" ? "Deal agreed" : "Closed"}
-                        </Text>
+                        <StatusPill
+                          kind={o.status === "open" ? (responses.some((r) => r.offer_id === o.id && r.status === "pending_business") ? "waiting" : "open") : o.status === "agreed" ? "agreed" : "closed"}
+                          label={o.status === "open" ? (responses.some((r) => r.offer_id === o.id && r.status === "pending_business") ? "Open, a Nova answered" : "Open") : o.status === "agreed" ? "Deal agreed" : "Closed"}
+                        />
                         {o.status === "open" && (
                           <Text style={styles.closeLink} onPress={() => onClose(o.id)}>
                             Close offer
@@ -485,11 +507,11 @@ const styles = StyleSheet.create({
   centerText: { ...textOnArt, ...typography.body, color: colors.text, textAlign: "center" },
   big: { ...textOnArt, ...typography.heading, color: colors.text, textAlign: "center" },
   recommend: { gap: spacing.xs, backgroundColor: colors.surfaceRaised },
-  recoPrice: { ...typography.title, color: colors.accent },
+  recoPrice: { ...typography.title, color: gold },
   offer: { gap: spacing.xs },
   offerTop: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   offerTitle: { ...typography.label, color: colors.text },
-  price: { ...typography.heading, color: colors.accent },
+  price: { ...typography.heading, color: gold },
   meta: { ...typography.caption, color: colors.textMuted },
   offerBottom: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.xs },
   status: { ...typography.caption, color: colors.textMuted },

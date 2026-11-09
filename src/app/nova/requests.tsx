@@ -4,7 +4,9 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
+import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
+import { StatusPill } from "@/components/StatusPill";
 import { CounterBox } from "@/components/CounterBox";
 import { FormMessage } from "@/components/FormMessage";
 import { GraffitiBackground } from "@/components/GraffitiBackground";
@@ -12,9 +14,12 @@ import { SkeletonCard } from "@/components/Skeleton";
 import { FeedOffer, loadFeed, respond } from "@/lib/negotiation";
 import { platformLabel } from "@/lib/novaProfile";
 import { pingBadges } from "@/lib/attention";
+import { durationLabel } from "@/lib/pricing";
+import { pictureUrl } from "@/lib/pictures";
+import { CATEGORIES } from "@/lib/businessProfile";
 import { MAX_COUNTERS } from "@/lib/pricing";
 import { shortNumber } from "@/lib/validation";
-import { colors, spacing, textOnArt, typography } from "@/theme";
+import { categoryColors, colors, gold, spacing, statusColors, textOnArt, typography } from "@/theme";
 
 function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => void }) {
   const [countering, setCountering] = useState(false);
@@ -52,15 +57,36 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
         <Text style={[styles.offerTitle, styles.flex]}>{offer.title}</Text>
         <Text style={styles.price}>GHS {shortNumber(price)}</Text>
       </View>
-      {!!offer.business_name && <Text style={styles.meta}>{offer.business_name}</Text>}
+      {!!offer.business_name && (
+        <View style={styles.biz}>
+          <Avatar
+            uri={pictureUrl(offer.business_avatar)}
+            name={offer.business_name}
+            size={32}
+            ring={categoryColors[offer.business_category] ?? undefined}
+          />
+          <Text style={[styles.meta, styles.flex]}>
+            {offer.business_name}
+            {CATEGORIES.find((c) => c.id === offer.business_category)
+              ? ` · ${CATEGORIES.find((c) => c.id === offer.business_category)?.label}`
+              : ""}
+          </Text>
+        </View>
+      )}
       <Text style={styles.meta}>
         {offer.kind === "multi" ? "Several platforms: " : ""}
         {offer.platforms.map(platformLabel).join(", ")} · about {shortNumber(offer.target_views)} views ·{" "}
         {offer.city || "Anywhere in Ghana"}
       </Text>
       <Text style={styles.meta}>One post, within {offer.post_within_days} days of agreeing</Text>
+      <Text style={styles.meta}>Stays up: {durationLabel(offer.duration_days)}</Text>
       {!!offer.description && <Text style={styles.body}>{offer.description}</Text>}
 
+      {s === "agreed" && <StatusPill kind="agreed" label="Deal agreed" />}
+      {s === "pending_business" && <StatusPill kind="waiting" label="Waiting for the business" />}
+      {s === "pending_nova" && offer.offer_status === "open" && <StatusPill kind="waiting" label="Needs your answer" />}
+      {s === null && offer.offer_status === "open" && <StatusPill kind="open" label="Open" />}
+      {(s === "declined" || s === "closed") && <StatusPill kind="closed" label={s === "declined" ? "You said no" : "Taken"} />}
       {s === "agreed" && (
         <Text style={styles.good}>Deal agreed at GHS {shortNumber(offer.agreed_price ?? price)}. Posting and payment steps come next.</Text>
       )}
@@ -170,15 +196,16 @@ const styles = StyleSheet.create({
   hint: { ...textOnArt, ...typography.caption, color: colors.textMuted, lineHeight: 18 },
   gap: { gap: spacing.sm },
   offer: { gap: spacing.xs },
-  newTag: { ...typography.caption, color: colors.accent, fontWeight: "700", letterSpacing: 1 },
+  newTag: { ...typography.caption, color: statusColors.open, fontWeight: "700", letterSpacing: 1 },
   top: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   offerTitle: { ...typography.label, color: colors.text },
-  price: { ...typography.heading, color: colors.accent },
+  price: { ...typography.heading, color: gold },
+  biz: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   meta: { ...typography.caption, color: colors.textMuted },
   body: { ...typography.body, color: colors.textMuted },
   note: { ...typography.label, color: colors.text, marginTop: spacing.xs },
   wait: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
-  good: { ...typography.label, color: colors.accent, marginTop: spacing.xs },
+  good: { ...typography.label, color: gold, marginTop: spacing.xs },
   actions: { gap: spacing.sm, marginTop: spacing.sm },
   link: { ...typography.label, color: colors.textMuted, textDecorationLine: "underline", textAlign: "center" },
 });
