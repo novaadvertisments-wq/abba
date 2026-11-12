@@ -88,11 +88,35 @@ export function checkDescription(value: string): string {
   return value.trim().length > 280 ? "Keep it under 280 characters" : "";
 }
 
+// Phone numbers, emails, links and "message me elsewhere" wording are kept out of offers and notes,
+// so deals stay inside Aba. The database runs the same check (keep the two in step with contact_screen()).
+export function looksLikeContact(text: string): boolean {
+  return (
+    /(\+?[0-9][ .()-]?){9,}/.test(text) ||
+    /[a-z0-9._%+-]+@[a-z0-9.-]+/i.test(text) ||
+    /@[a-z0-9_.]{3,}/i.test(text) ||
+    /(https?:\/\/|www\.|\bt\.me|\bwa\.me|\.(com|net|org|co|io|me|app|gh)\b)/i.test(text) ||
+    /\b(whats ?app|telegram|call me|text me|dm me|inbox me|my number|my contact|contact me|reach me)\b/i.test(text) ||
+    /(\b(zero|one|two|three|four|five|six|seven|eight|nine|oh)\b[ ,.-]*){7,}/i.test(text)
+  );
+}
+export const CONTACT_MESSAGE = "Please keep phone numbers, emails and links out. Aba keeps the deal safe inside the app.";
+
+export function checkOfferDescription(value: string): string {
+  if (value.trim().length > 280) return "Keep it under 280 characters";
+  return looksLikeContact(value) ? CONTACT_MESSAGE : "";
+}
+
+export function checkNote(value: string): string {
+  if (value.trim().length > 140) return "Keep the note under 140 characters";
+  return looksLikeContact(value) ? CONTACT_MESSAGE : "";
+}
+
 export function checkOfferTitle(value: string): string {
   const v = value.trim();
   if (v.length < 3) return "Give your offer a short title";
   if (v.length > 60) return "Keep the title under 60 characters";
-  return "";
+  return looksLikeContact(v) ? CONTACT_MESSAGE : "";
 }
 
 export function parseBudget(value: string): number | null {

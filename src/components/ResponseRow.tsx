@@ -4,7 +4,8 @@ import { StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/Button";
 import { CounterBox } from "@/components/CounterBox";
 import { FormMessage } from "@/components/FormMessage";
-import { Response, respond } from "@/lib/negotiation";
+import { DealFilesEditor } from "@/components/DealFilesEditor";
+import { Response, postByText, respond } from "@/lib/negotiation";
 import { MAX_COUNTERS } from "@/lib/pricing";
 import { shortNumber } from "@/lib/validation";
 import { Avatar } from "@/components/Avatar";
@@ -29,8 +30,8 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
     else onChanged();
   };
 
-  const sendCounter = async (price: number) => {
-    const result = await respond(r.offer_id, r.nova_id, "counter", price);
+  const sendCounter = async (price: number, note: string) => {
+    const result = await respond(r.offer_id, r.nova_id, "counter", price, note);
     if (!result.ok) return result.message;
     setCountering(false);
     onChanged();
@@ -61,6 +62,7 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
         </Text>
       )}
 
+      {!!r.last_note && r.status !== "agreed" && <Text style={styles.noteText}>“{r.last_note}”</Text>}
       {r.status === "pending_business" && (
         <>
           <StatusPill kind="waiting" label="Needs your answer" />
@@ -91,6 +93,10 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
       {r.status === "agreed" && (
         <Text style={styles.good}>Deal agreed with {who} at GHS {shortNumber(r.agreed_price ?? r.last_price)}.</Text>
       )}
+      {r.status === "agreed" && !!postByText(r.agreed_at, r.post_within_days) && (
+        <Text style={styles.meta}>{postByText(r.agreed_at, r.post_within_days)}. Posting and verification steps come next.</Text>
+      )}
+      {r.status === "agreed" && <DealFilesEditor target={{ offerId: r.offer_id }} />}
       <FormMessage message={error} />
     </View>
   );
@@ -105,6 +111,7 @@ const styles = StyleSheet.create({
   warn: { ...typography.caption, color: statusColors.waiting },
   ask: { ...typography.label, color: gold, marginTop: spacing.xs },
   wait: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
+  noteText: { ...typography.caption, color: colors.text, fontStyle: "italic" },
   good: { ...typography.label, color: gold, marginTop: spacing.xs },
   actions: { gap: spacing.sm, marginTop: spacing.xs },
   link: { ...typography.label, color: colors.textMuted, textDecorationLine: "underline", textAlign: "center" },

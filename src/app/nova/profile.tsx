@@ -215,7 +215,7 @@ export default function NovaProfile() {
   const platformMeta = PLATFORMS.find((p) => p.id === platform);
 
   return (
-    <GraffitiBackground variant="profile" strength={0.85}>
+    <GraffitiBackground variant="profile" strength={1}>
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView

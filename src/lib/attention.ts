@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 
+import { loadNovaGroups } from "./groups";
 import { loadFeed, loadResponses } from "./negotiation";
 
 const listeners = new Set<() => void>();
@@ -19,13 +20,13 @@ export function useAttentionCount(role: "nova" | "business", enabled: boolean): 
 
   const refresh = useCallback(async () => {
     if (role === "nova") {
-      const r = await loadFeed();
+      const [r, g] = await Promise.all([loadFeed(), loadNovaGroups()]);
       if (r.ok) {
-        setCount(
-          r.offers.filter(
-            (o) => o.offer_status === "open" && (o.neg_status === null || o.neg_status === "pending_nova"),
-          ).length,
-        );
+        const offers = r.offers.filter(
+          (o) => o.offer_status === "open" && (o.neg_status === null || o.neg_status === "pending_nova"),
+        ).length;
+        const groups = g.ok ? g.groups.filter((x) => x.status === "open" && !x.joined).length : 0;
+        setCount(offers + groups);
       }
     } else {
       const r = await loadResponses();

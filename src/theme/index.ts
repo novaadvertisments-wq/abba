@@ -115,7 +115,7 @@ export const logoRatio = {
 // Background wallpapers: one for each part of the app. They are already dark
 // and quiet, so they only ever act as a background.
 export const art = {
-  auth: require("../assets/graffiti/splash-lighthouse.jpg"), // login, welcome and sign-up
+  auth: require("../assets/graffiti/pano-lighthouse.jpg"), // login, welcome and sign-up (wide picture)
   home: require("../assets/graffiti/graffiti-home.jpg"),
   campaigns: require("../assets/graffiti/graffiti-campaigns.jpg"),
   verify: require("../assets/graffiti/graffiti-verify.jpg"),
@@ -123,8 +123,18 @@ export const art = {
 };
 export type ArtName = keyof typeof art;
 
+// How much black goes over each picture so the words stay easy to read.
+export const artVeil: Record<ArtName, number> = {
+  auth: 0.5,
+  home: 0.55,
+  campaigns: 0.55,
+  verify: 0.4,
+  profile: 0.6,
+};
+
 // The first picture of the opening animation (the second one is art.auth).
-export const splashFirst = require("../assets/graffiti/splash-nkrumah.jpg");
+export const splashFirst = require("../assets/graffiti/splash-wide-1.jpg"); // wide, Kwame Nkrumah Memorial
+export const splashSecond = require("../assets/graffiti/splash-wide-2.jpg"); // wide, lighthouse
 
 // A soft dark halo for text that sits directly on the graffiti.
 export const textOnArt = {

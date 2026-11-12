@@ -1,7 +1,9 @@
 import { ReactNode } from "react";
+
+import { Panorama } from "@/components/Panorama";
 import { Image, StyleSheet, View } from "react-native";
 
-import { ArtName, art, colors, tabTint } from "@/theme";
+import { ArtName, art, artVeil, colors, tabTint } from "@/theme";
 
 type Props = {
   children: ReactNode;
@@ -15,6 +17,9 @@ type Props = {
 export function GraffitiBackground({ children, variant = "auth", strength = 1 }: Props) {
   return (
     <View style={styles.root}>
+      {variant === "auth" ? (
+        <Panorama source={art.auth} />
+      ) : (
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Image
           source={art[variant]}
@@ -24,9 +29,10 @@ export function GraffitiBackground({ children, variant = "auth", strength = 1 }:
           importantForAccessibility="no-hide-descendants"
         />
       </View>
+      )}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tabTint[variant] }]} />
-      {/* The login pictures are bright and colourful, so they get a dark veil to keep the words easy to read. */}
-      {variant === "auth" && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.58)" }]} />}
+      {/* The pictures are bright and colourful, so a dark veil keeps the words easy to read. */}
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${artVeil[variant]})` }]} />
       {children}
     </View>
   );

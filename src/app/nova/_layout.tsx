@@ -23,7 +23,7 @@ export default function NovaLayout() {
       <Tabs.Screen
         name="requests"
         options={{
-          title: "Requests",
+          title: "Offers",
           tabBarBadge: count > 0 ? count : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.onAccent },
           tabBarIcon: ({ color }) => (
@@ -43,9 +43,9 @@ export default function NovaLayout() {
       <Tabs.Screen
         name="verification"
         options={{
-          title: "Verification",
+          title: "Rank",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="shield-checkmark-outline" size={22} color={color} />
+            <Ionicons name="trophy-outline" size={22} color={color} />
           ),
         }}
       />

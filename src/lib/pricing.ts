@@ -48,3 +48,24 @@ export const POST_WITHIN_OPTIONS = [3, 7, 14, 30];
 
 // Each side may counter at most this many times per offer. (The database enforces it too.)
 export const MAX_COUNTERS = 3;
+
+// ---- Group campaigns (Day 10) ----
+// Aba keeps this share of what the business pays; the Novas get the rest.
+export const COMMISSION_PERCENT = 5;
+export const GROUP_JOIN_OPTIONS = [3, 7, 14]; // days Novas have to join
+export const GROUP_SIZE_OPTIONS = [3, 5, 10, 20, 30]; // most Novas
+export const GROUP_MIN_VIEWS_OPTIONS = [0, 500, 1000, 5000, 10000]; // 0 = any
+export const GROUP_LUMEN_OPTIONS = [5, 10, 20, 50, 100]; // quick picks; a business can type any number
+export const GROUP_MIN_LUMENS = 5; // the smallest group campaign
+export const GROUP_MARKUP_PERCENT = 20; // group campaigns cost 20% more per lumen (placeholder)
+
+// The price of a lumen in a group campaign is FIXED: nobody types their own price.
+// PLACEHOLDER (keep in step with lumen_rate() in abba-day10c-setup.sql).
+export const groupRate = (durationDays: number) =>
+  Math.round((PRICE_PER_LUMEN_GHS.single * (100 + GROUP_MARKUP_PERCENT) / 100) * (DURATION_FACTOR[durationDays] ?? 1));
+
+// The most the business can be charged: every lumen at the fixed rate.
+export const groupMaxCost = (lumens: number, durationDays: number) => lumens * groupRate(durationDays);
+
+// What a Nova earns per lumen of their reach, after Aba's cut (rounded down).
+export const novaRate = (rate: number) => Math.floor((rate * (100 - COMMISSION_PERCENT)) / 100);

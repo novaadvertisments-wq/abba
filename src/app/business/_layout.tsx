@@ -22,22 +22,22 @@ export default function BusinessLayout() {
   return (
     <Tabs screenOptions={options}>
       <Tabs.Screen
-        name="find"
+        name="requests"
         options={{
-          title: "Find Novas",
+          title: "Offers",
           tabBarBadge: count > 0 ? count : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.onAccent },
           tabBarIcon: ({ color }) => (
-            <Ionicons name="search" size={22} color={color} />
+            <Ionicons name="chatbubbles-outline" size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="requests"
+        name="find"
         options={{
-          title: "Requests",
+          title: "Post",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="chatbubbles-outline" size={22} color={color} />
+            <Ionicons name="add-circle-outline" size={22} color={color} />
           ),
         }}
       />

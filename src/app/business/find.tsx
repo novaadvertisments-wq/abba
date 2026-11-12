@@ -9,30 +9,25 @@ import { Chip } from "@/components/Chip";
 import { ChoiceCard } from "@/components/ChoiceCard";
 import { FormMessage } from "@/components/FormMessage";
 import { GraffitiBackground } from "@/components/GraffitiBackground";
+import { GroupDraft, takePendingDraft } from "@/lib/groups";
+import { takePendingOffer } from "@/lib/offers";
+import { GroupForm } from "@/components/GroupForm";
 import { Radar } from "@/components/Radar";
-import { ResponseRow } from "@/components/ResponseRow";
-import { SkeletonCard } from "@/components/Skeleton";
 import { TextField } from "@/components/TextField";
-import { pingBadges } from "@/lib/attention";
 import { useAuth } from "@/lib/auth";
 import { loadBusinessProfile } from "@/lib/businessProfile";
-import { CITIES, PLATFORMS, platformLabel } from "@/lib/novaProfile";
+import { CITIES, PLATFORMS } from "@/lib/novaProfile";
 import {
   LocationState,
-  Offer,
   checkLocation,
-  closeOffer,
   countMatchingNovas,
   createOffer,
-  loadOffers,
 } from "@/lib/offers";
-import { Response, loadResponses } from "@/lib/negotiation";
 import { LUMEN_OPTIONS, OfferKind, DURATION_OPTIONS, POST_WITHIN_OPTIONS, durationLabel, recommendPrice, viewsFor } from "@/lib/pricing";
-import { checkBudget, checkDescription, checkOfferTitle, parseBudget, shortNumber } from "@/lib/validation";
-import { StatusPill } from "@/components/StatusPill";
+import { checkBudget, checkOfferDescription, checkOfferTitle, parseBudget, shortNumber } from "@/lib/validation";
 import { colors, gold, radius, spacing, textOnArt, typography } from "@/theme";
 
-type Mode = "list" | "form" | "searching";
+type Mode = "list" | "form" | "group" | "searching";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -42,13 +37,10 @@ export default function FindNovas() {
 
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("list");
+  const [draft, setDraft] = useState<GroupDraft | null>(null);
   const modeRef = useRef<Mode>("list");
   modeRef.current = mode;
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [responses, setResponses] = useState<Response[]>([]);
   const [postWithin, setPostWithin] = useState(7);
   const [duration, setDuration] = useState(1);
   const [profileCity, setProfileCity] = useState("");
@@ -75,21 +67,11 @@ export default function FindNovas() {
 
   const refresh = useCallback(async () => {
     if (!userId) return;
-    const [o, p, rs] = await Promise.all([loadOffers(userId), loadBusinessProfile(userId), loadResponses()]);
-    if (!o.ok) {
-      setLoadError(o.message);
-      setLoading(false);
-      return;
-    }
-    setLoadError("");
-    setOffers(o.offers);
-    if (rs.ok) setResponses(rs.responses);
+    const p = await loadBusinessProfile(userId);
     if (p.ok) {
       setProfileCity(p.city);
       setProfileComplete(!!(p.business_name && p.category && p.city));
     }
-    setLoading(false);
-    pingBadges();
   }, [userId]);
 
   useEffect(() => {
@@ -100,11 +82,29 @@ export default function FindNovas() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-      // Look again every 30 seconds, but never while the person is typing a new offer.
-      const timer = setInterval(() => {
-        if (modeRef.current === "list") refresh();
-      }, 30000);
-      return () => clearInterval(timer);
+      const d = takePendingDraft();
+      if (d) {
+        setDraft(d);
+        setMode("group");
+      }
+      const old = takePendingOffer();
+      if (old) {
+        // "Post again": the form opens filled in with the old offer.
+        const known = CITIES.slice(0, -1).includes(old.city);
+        setTitle(old.title);
+        setDescription(old.description);
+        setBudget(String(old.budget_ghs));
+        setKind(old.kind);
+        setPostWithin(old.post_within_days);
+        setDuration(old.duration_days);
+        setLumens(Math.max(1, Math.round(old.target_views / 1000)));
+        setPlatforms(old.platforms);
+        setCityPick(old.city ? (known ? old.city : "Other") : "");
+        setOtherCity(old.city && !known ? old.city : "");
+        setErrors({});
+        setFormError("");
+        setMode("form");
+      }
     }, [refresh]),
   );
 
@@ -166,7 +166,7 @@ export default function FindNovas() {
       kind: kind ? "" : "Choose one platform or several",
       lumens: lumens ? "" : "Choose how many views you want",
       title: checkOfferTitle(title),
-      description: checkDescription(description),
+      description: checkOfferDescription(description),
       budget: checkBudget(budget),
       platforms:
         kind === "multi" && platforms.length < 2
@@ -216,17 +216,8 @@ export default function FindNovas() {
     refresh();
   };
 
-  const onClose = async (id: string) => {
-    const result = await closeOffer(id);
-    if (!result.ok) {
-      setLoadError(result.message);
-      return;
-    }
-    refresh();
-  };
-
   return (
-    <GraffitiBackground variant="home" strength={0.85}>
+    <GraffitiBackground variant="home" strength={1}>
       <SafeAreaView style={styles.screen} edges={["top"]}>
         <KeyboardAvoidingView style={styles.flex} behavior="padding">
           <ScrollView
@@ -259,10 +250,29 @@ export default function FindNovas() {
                         Location is off, so the search used your city instead. You can allow it in your phone's settings.
                       </Text>
                     )}
-                    <Button title="Done" onPress={() => setMode("list")} />
+                    <Button
+                      title="See my offers"
+                      onPress={() => {
+                        setMode("list");
+                        router.push("/business/requests");
+                      }}
+                    />
                   </>
                 )}
               </View>
+            ) : mode === "group" ? (
+              <GroupForm
+                key={draft ? JSON.stringify(draft) : "new"}
+                initial={draft}
+                userId={userId}
+                profileCity={profileCity}
+                onCancel={() => { setDraft(null); setMode("list"); }}
+                onPosted={() => {
+                  setDraft(null);
+                  setMode("list");
+                  router.push("/business/campaigns");
+                }}
+              />
             ) : mode === "form" ? (
               <>
                 <Text style={styles.title}>New offer</Text>
@@ -421,9 +431,9 @@ export default function FindNovas() {
               </>
             ) : (
               <>
-                <Text style={styles.title}>Find Novas</Text>
+                <Text style={styles.title}>Post</Text>
                 <Text style={styles.hint}>
-                  Post an open offer with your price. Novas who match can accept it or counter.
+                  Choose what to post. Novas who match can accept or counter an offer, or join a group campaign.
                 </Text>
                 {profileComplete === false ? (
                   <Card style={styles.recommend}>
@@ -434,54 +444,27 @@ export default function FindNovas() {
                     <Button title="Go to my profile" onPress={() => router.push("/business/profile")} />
                   </Card>
                 ) : (
-                  <Button title="Post an offer" onPress={openForm} disabled={profileComplete === null} />
+                  <>
+                    <ChoiceCard
+                      title="Single offer"
+                      description="Name your price. Matching Novas accept it or counter"
+                      icon="pricetag-outline"
+                      selected={false}
+                      onPress={openForm}
+                    />
+                    <ChoiceCard
+                      title="Group campaign"
+                      description="One budget shared by many Novas, by their views"
+                      icon="people-outline"
+                      selected={false}
+                      onPress={() => setMode("group")}
+                    />
+                  </>
                 )}
 
-                <Text style={[styles.heading, { marginTop: spacing.md }]}>Your offers</Text>
-                {loading ? (
-                  <View style={styles.gap} accessibilityLabel="Loading your offers">
-                    <SkeletonCard lines={2} />
-                    <SkeletonCard lines={2} />
-                  </View>
-                ) : loadError ? (
-                  <View style={styles.gap}>
-                    <FormMessage message={loadError} />
-                    <Button title="Try again" variant="secondary" onPress={() => { setLoading(true); refresh(); }} />
-                  </View>
-                ) : offers.length === 0 ? (
-                  <Card>
-                    <Text style={styles.body}>No offers yet. Post your first one above.</Text>
-                  </Card>
-                ) : (
-                  offers.map((o) => (
-                    <Card key={o.id} style={styles.offer}>
-                      <View style={styles.offerTop}>
-                        <Text style={[styles.offerTitle, styles.flex]}>{o.title}</Text>
-                        <Text style={styles.price}>GHS {shortNumber(o.budget_ghs)}</Text>
-                      </View>
-                      <Text style={styles.meta}>
-                        {o.kind === "multi" ? "Several platforms: " : ""}{o.platforms.map(platformLabel).join(", ")} · {shortNumber(o.target_views)} views · {o.city || "Anywhere in Ghana"}
-                      </Text>
-                      <Text style={styles.meta}>One-time post, within {o.post_within_days} days, stays up {durationLabel(o.duration_days)}</Text>
-                      <View style={styles.offerBottom}>
-                        <StatusPill
-                          kind={o.status === "open" ? (responses.some((r) => r.offer_id === o.id && r.status === "pending_business") ? "waiting" : "open") : o.status === "agreed" ? "agreed" : "closed"}
-                          label={o.status === "open" ? (responses.some((r) => r.offer_id === o.id && r.status === "pending_business") ? "Open, a Nova answered" : "Open") : o.status === "agreed" ? "Deal agreed" : "Closed"}
-                        />
-                        {o.status === "open" && (
-                          <Text style={styles.closeLink} onPress={() => onClose(o.id)}>
-                            Close offer
-                          </Text>
-                        )}
-                      </View>
-                      {responses
-                        .filter((r) => r.offer_id === o.id && (o.status === "open" || r.status === "agreed"))
-                        .map((r) => (
-                          <ResponseRow key={r.negotiation_id} r={r} onChanged={refresh} />
-                        ))}
-                    </Card>
-                  ))
-                )}
+                <Text style={styles.hint}>
+                  After you post, find your offers and the Novas who answered on the Offers tab, and your group campaigns on the Campaigns tab.
+                </Text>
               </>
             )}
           </ScrollView>

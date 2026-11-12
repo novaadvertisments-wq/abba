@@ -17,7 +17,10 @@ export type FeedOffer = {
   duration_days: number;
   created_at: string;
   business_name: string;
-  offer_status: "open" | "closed" | "agreed";
+  offer_status: "open" | "closed" | "agreed" | "expired";
+  expires_at?: string;
+  last_note?: string;
+  agreed_at?: string | null;
   neg_status: NegStatus | null;
   last_price: number | null;
   last_by: "nova" | "business" | null;
@@ -40,7 +43,10 @@ export type Response = {
   counters: number;
   agreed_price: number | null;
   updated_at: string;
-  offer_status: "open" | "closed" | "agreed";
+  offer_status: "open" | "closed" | "agreed" | "expired";
+  last_note?: string;
+  agreed_at?: string | null;
+  post_within_days?: number;
   offer_target_views: number;
   nova_views: number | null; // typical views per post, as the Nova declared them
   views_verified: boolean;
@@ -76,6 +82,7 @@ export async function respond(
   novaId: string | null,
   action: "accept" | "counter" | "decline",
   price?: number,
+  note?: string,
 ): Promise<{ ok: true; status: string } | Failure> {
   try {
     const { data, error } = await supabase.rpc("respond_to_offer", {
@@ -83,6 +90,7 @@ export async function respond(
       p_nova: novaId,
       p_action: action,
       p_price: price ?? null,
+      p_note: note?.trim() ? note.trim() : null,
     });
     if (error) {
       // "P0001" is a message we wrote ourselves for the person to read.
@@ -92,4 +100,23 @@ export async function respond(
   } catch {
     return FAIL;
   }
+}
+
+// "Expires in 3 days", "Expires today" and so on, for an open offer.
+export function expiryText(expiresAt?: string): string {
+  if (!expiresAt) return "";
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms <= 0) return "Expired";
+  const hours = Math.floor(ms / 3600000);
+  if (hours < 1) return "Expires within the hour";
+  if (hours < 24) return `Expires in ${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.floor(hours / 24);
+  return `Expires in ${days} day${days === 1 ? "" : "s"}`;
+}
+
+// The last day to post once a deal is agreed, for example "Post by 18 Nov".
+export function postByText(agreedAt: string | null | undefined, days: number | undefined): string {
+  if (!agreedAt || !days) return "";
+  const d = new Date(new Date(agreedAt).getTime() + days * 86400000);
+  return `Post by ${d.getDate()} ${d.toLocaleString("en-GB", { month: "short" })}`;
 }

@@ -1,17 +1,20 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
 import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
+import { NovaGroupCard } from "@/components/NovaGroupCard";
+import { NovaGroup, loadNovaGroups } from "@/lib/groups";
 import { StatusPill } from "@/components/StatusPill";
+import { WhatToPost } from "@/components/WhatToPost";
 import { CounterBox } from "@/components/CounterBox";
 import { FormMessage } from "@/components/FormMessage";
 import { GraffitiBackground } from "@/components/GraffitiBackground";
 import { SkeletonCard } from "@/components/Skeleton";
-import { FeedOffer, loadFeed, respond } from "@/lib/negotiation";
+import { FeedOffer, expiryText, loadFeed, postByText, respond } from "@/lib/negotiation";
 import { platformLabel } from "@/lib/novaProfile";
 import { pingBadges } from "@/lib/attention";
 import { durationLabel } from "@/lib/pricing";
@@ -22,6 +25,7 @@ import { shortNumber } from "@/lib/validation";
 import { categoryColors, colors, gold, spacing, statusColors, textOnArt, typography } from "@/theme";
 
 function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => void }) {
+  const [open, setOpen] = useState(false);
   const [countering, setCountering] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -40,39 +44,53 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
     else onChanged();
   };
 
-  const sendCounter = async (p: number) => {
-    const r = await respond(offer.id, null, "counter", p);
+  const sendCounter = async (p: number, note: string) => {
+    const r = await respond(offer.id, null, "counter", p, note);
     if (!r.ok) return r.message;
     setCountering(false);
     onChanged();
     return "";
   };
 
+  const [tagText, tagColor] =
+    offer.offer_status === "expired" && s !== "agreed" ? ["EXPIRED", colors.textMuted]
+    : s === "agreed" ? ["DEAL AGREED", statusColors.agreed]
+    : s === "pending_nova" && offer.offer_status === "open" ? ["NEEDS YOUR ANSWER", statusColors.waiting]
+    : s === "pending_business" ? ["WAITING FOR THE BUSINESS", statusColors.waiting]
+    : s === "declined" || s === "closed" ? ["CLOSED", colors.textMuted]
+    : ["NEW", statusColors.open];
+
   const canAnswer = offer.offer_status === "open" && (s === null || s === "pending_nova");
 
   return (
     <Card style={styles.offer}>
-      {s === null && offer.offer_status === "open" && <Text style={styles.newTag}>NEW</Text>}
-      <View style={styles.top}>
-        <Text style={[styles.offerTitle, styles.flex]}>{offer.title}</Text>
-        <Text style={styles.price}>GHS {shortNumber(price)}</Text>
-      </View>
-      {!!offer.business_name && (
-        <View style={styles.biz}>
-          <Avatar
-            uri={pictureUrl(offer.business_avatar)}
-            name={offer.business_name}
-            size={32}
-            ring={categoryColors[offer.business_category] ?? undefined}
-          />
-          <Text style={[styles.meta, styles.flex]}>
-            {offer.business_name}
-            {CATEGORIES.find((c) => c.id === offer.business_category)
-              ? ` · ${CATEGORIES.find((c) => c.id === offer.business_category)?.label}`
-              : ""}
-          </Text>
-        </View>
-      )}
+      <Pressable
+        onPress={() => setOpen((o) => !o)}
+        accessibilityRole="button"
+        accessibilityLabel={`${offer.title}, ${offer.business_name}, GHS ${shortNumber(price)}. ${open ? "Hide" : "Show"} details`}
+        style={styles.head}
+      >
+        <Text style={[styles.tag, { color: tagColor }]}>{tagText}</Text>
+        <Text style={styles.bigTitle}>{offer.title}</Text>
+        {!!offer.business_name && (
+          <View style={styles.biz}>
+            <Avatar
+              uri={pictureUrl(offer.business_avatar)}
+              name={offer.business_name}
+              size={30}
+              ring={categoryColors[offer.business_category] ?? undefined}
+            />
+            <Text style={styles.bigBiz}>{offer.business_name}</Text>
+          </View>
+        )}
+        <Text style={styles.bigPrice}>GHS {shortNumber(price)}</Text>
+        <Text style={styles.tap}>{open ? "Hide details" : "Tap to see the details"}</Text>
+      </Pressable>
+      {open && (
+        <View style={styles.details}>
+          {!!CATEGORIES.find((c) => c.id === offer.business_category) && (
+            <Text style={styles.meta}>{CATEGORIES.find((c) => c.id === offer.business_category)?.label}</Text>
+          )}
       <Text style={styles.meta}>
         {offer.kind === "multi" ? "Several platforms: " : ""}
         {offer.platforms.map(platformLabel).join(", ")} · about {shortNumber(offer.target_views)} views ·{" "}
@@ -80,6 +98,7 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
       </Text>
       <Text style={styles.meta}>One post, within {offer.post_within_days} days of agreeing</Text>
       <Text style={styles.meta}>Stays up: {durationLabel(offer.duration_days)}</Text>
+      {offer.offer_status === "open" && !!expiryText(offer.expires_at) && <Text style={styles.meta}>{expiryText(offer.expires_at)}</Text>}
       {!!offer.description && <Text style={styles.body}>{offer.description}</Text>}
 
       {s === "agreed" && <StatusPill kind="agreed" label="Deal agreed" />}
@@ -88,13 +107,15 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
       {s === null && offer.offer_status === "open" && <StatusPill kind="open" label="Open" />}
       {(s === "declined" || s === "closed") && <StatusPill kind="closed" label={s === "declined" ? "You said no" : "Taken"} />}
       {s === "agreed" && (
-        <Text style={styles.good}>Deal agreed at GHS {shortNumber(offer.agreed_price ?? price)}. Posting and payment steps come next.</Text>
+        <Text style={styles.good}>Deal agreed at GHS {shortNumber(offer.agreed_price ?? price)}. {postByText(offer.agreed_at, offer.post_within_days)}{postByText(offer.agreed_at, offer.post_within_days) ? ". " : ""}Posting and payment steps come next.</Text>
       )}
+      {!!offer.last_note && s !== "agreed" && <Text style={styles.noteText}>“{offer.last_note}”</Text>}
       {s === "pending_business" && (
         <Text style={styles.wait}>Waiting for the business. You asked for GHS {shortNumber(price)}.</Text>
       )}
       {s === "declined" && <Text style={styles.wait}>You said no to this one.</Text>}
       {s === "closed" && <Text style={styles.wait}>This offer was taken by someone else.</Text>}
+      {offer.offer_status === "expired" && s !== "agreed" && <StatusPill kind="closed" label="Expired" />}
       {offer.offer_status !== "open" && s === "pending_nova" && <Text style={styles.wait}>This offer is no longer open.</Text>}
       {s === "pending_nova" && offer.offer_status === "open" && (
         <Text style={styles.note}>The business counter-offered GHS {shortNumber(price)}.</Text>
@@ -117,6 +138,9 @@ function OfferCard({ offer, onChanged }: { offer: FeedOffer; onChanged: () => vo
       {canAnswer && countering && (
         <CounterBox onSend={sendCounter} onCancel={() => setCountering(false)} initial={String(price)} />
       )}
+        {s === "agreed" && <WhatToPost target={{ offerId: offer.id }} />}
+        </View>
+      )}
       <FormMessage message={error} />
     </Card>
   );
@@ -127,9 +151,11 @@ export default function NovaRequests() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [offers, setOffers] = useState<FeedOffer[]>([]);
+  const [groups, setGroups] = useState<NovaGroup[]>([]);
 
   const refresh = useCallback(async () => {
-    const r = await loadFeed();
+    const [r, gr] = await Promise.all([loadFeed(), loadNovaGroups()]);
+    if (gr.ok) setGroups(gr.groups);
     if (!r.ok) setError(r.message);
     else {
       setError("");
@@ -150,7 +176,7 @@ export default function NovaRequests() {
   );
 
   return (
-    <GraffitiBackground variant="home" strength={0.85}>
+    <GraffitiBackground variant="home" strength={1}>
       <SafeAreaView style={styles.screen} edges={["top"]}>
         <ScrollView
           contentContainerStyle={styles.content}
@@ -159,9 +185,9 @@ export default function NovaRequests() {
             <RefreshControl refreshing={refreshing} tintColor={colors.accent} onRefresh={() => { setRefreshing(true); refresh(); }} />
           }
         >
-          <Text style={styles.title}>Requests</Text>
+          <Text style={styles.title}>Offers</Text>
           <Text style={styles.hint}>
-            Offers from businesses that match your accounts and city. Accept the price, or send your own.
+            Offers and group campaigns from businesses that match your accounts and city. Accept a price, send your own, or join a group campaign.
           </Text>
           {loading ? (
             <View style={styles.gap} accessibilityLabel="Loading offers">
@@ -173,14 +199,18 @@ export default function NovaRequests() {
               <FormMessage message={error} />
               <Button title="Try again" variant="secondary" onPress={() => { setLoading(true); refresh(); }} />
             </View>
-          ) : offers.length === 0 ? (
+          ) : offers.length === 0 && groups.length === 0 ? (
             <Card>
               <Text style={styles.body}>
                 No offers for you yet. Make sure your city and social accounts are filled in on your Profile, then pull down to refresh.
               </Text>
             </Card>
           ) : (
-            offers.map((o) => <OfferCard key={o.id} offer={o} onChanged={refresh} />)
+            <>
+              {offers.map((o) => <OfferCard key={o.id} offer={o} onChanged={refresh} />)}
+              {groups.length > 0 && <Text style={styles.heading}>Group campaigns</Text>}
+              {groups.map((g) => <NovaGroupCard key={g.id} g={g} onChanged={refresh} />)}
+            </>
           )}
         </ScrollView>
       </SafeAreaView>
@@ -194,8 +224,16 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
   title: { ...textOnArt, ...typography.title, color: colors.text, marginTop: spacing.md },
   hint: { ...textOnArt, ...typography.caption, color: colors.textMuted, lineHeight: 18 },
+  heading: { ...textOnArt, ...typography.heading, color: colors.text, marginTop: spacing.sm },
   gap: { gap: spacing.sm },
   offer: { gap: spacing.xs },
+  head: { gap: spacing.xs },
+  details: { gap: spacing.xs, marginTop: spacing.sm },
+  tag: { ...typography.caption, fontWeight: "700", letterSpacing: 1 },
+  bigTitle: { fontSize: 26, lineHeight: 31, fontWeight: "800", color: colors.text },
+  bigBiz: { fontSize: 17, fontWeight: "700", color: colors.text, flex: 1 },
+  bigPrice: { fontSize: 30, fontWeight: "800", color: gold, marginTop: spacing.xs },
+  tap: { ...typography.caption, color: colors.textMuted },
   newTag: { ...typography.caption, color: statusColors.open, fontWeight: "700", letterSpacing: 1 },
   top: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   offerTitle: { ...typography.label, color: colors.text },
@@ -205,6 +243,7 @@ const styles = StyleSheet.create({
   body: { ...typography.body, color: colors.textMuted },
   note: { ...typography.label, color: colors.text, marginTop: spacing.xs },
   wait: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
+  noteText: { ...typography.caption, color: colors.text, fontStyle: "italic" },
   good: { ...typography.label, color: gold, marginTop: spacing.xs },
   actions: { gap: spacing.sm, marginTop: spacing.sm },
   link: { ...typography.label, color: colors.textMuted, textDecorationLine: "underline", textAlign: "center" },

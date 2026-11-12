@@ -3,12 +3,12 @@ import { StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
-import { checkBudget, parseBudget } from "@/lib/validation";
+import { checkBudget, checkNote, parseBudget } from "@/lib/validation";
 import { spacing } from "@/theme";
 
 type Props = {
   // Returns an error message, or "" when it worked.
-  onSend: (price: number) => Promise<string>;
+  onSend: (price: number, note: string) => Promise<string>;
   onCancel: () => void;
   initial?: string;
 };
@@ -16,6 +16,8 @@ type Props = {
 // A small box for typing your own price and sending it back.
 export function CounterBox({ onSend, onCancel, initial = "" }: Props) {
   const [value, setValue] = useState(initial);
+  const [note, setNote] = useState("");
+  const [noteError, setNoteError] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -25,8 +27,13 @@ export function CounterBox({ onSend, onCancel, initial = "" }: Props) {
       setError(problem);
       return;
     }
+    const noteProblem = checkNote(note);
+    if (noteProblem) {
+      setNoteError(noteProblem);
+      return;
+    }
     setBusy(true);
-    const message = await onSend(parseBudget(value) as number);
+    const message = await onSend(parseBudget(value) as number, note.trim());
     setBusy(false);
     if (message) setError(message);
   };
@@ -40,6 +47,14 @@ export function CounterBox({ onSend, onCancel, initial = "" }: Props) {
         error={error}
         keyboardType="number-pad"
         placeholder="e.g. 220"
+      />
+      <TextField
+        label="Short note (optional)"
+        value={note}
+        onChangeText={(t) => { setNote(t); setNoteError(""); }}
+        error={noteError}
+        placeholder="e.g. I can post a reel for this"
+        maxLength={140}
       />
       <Button title="Send price" loading={busy} onPress={send} />
       <Button title="Cancel" variant="secondary" disabled={busy} onPress={onCancel} />

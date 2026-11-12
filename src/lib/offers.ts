@@ -16,8 +16,9 @@ export type Offer = {
   kind: "single" | "multi";
   post_within_days: number;
   duration_days: number;
-  status: "open" | "closed" | "agreed";
+  status: "open" | "closed" | "agreed" | "expired";
   created_at: string;
+  expires_at?: string;
 };
 
 export type NewOffer = {
@@ -38,9 +39,11 @@ const FAIL: Failure = { ok: false, message: "Something went wrong. Check your in
 
 export async function loadOffers(userId: string): Promise<{ ok: true; offers: Offer[] } | Failure> {
   try {
+    // Offers nobody agreed to in time are marked expired first.
+    await supabase.rpc("expire_offers");
     const { data, error } = await supabase
       .from("offers")
-      .select("id, title, description, budget_ghs, platforms, city, target_views, kind, post_within_days, duration_days, status, created_at")
+      .select("id, title, description, budget_ghs, platforms, city, target_views, kind, post_within_days, duration_days, status, created_at, expires_at")
       .eq("business_id", userId)
       .order("created_at", { ascending: false });
     if (error) return FAIL;
@@ -53,7 +56,9 @@ export async function loadOffers(userId: string): Promise<{ ok: true; offers: Of
 export async function createOffer(userId: string, o: NewOffer): Promise<{ ok: true } | Failure> {
   try {
     const { error } = await supabase.from("offers").insert({ business_id: userId, ...o });
-    return error ? FAIL : { ok: true };
+    // "P0001" is a message we wrote ourselves for the person to read (for example a daily limit).
+    if (error) return error.code === "P0001" && error.message ? { ok: false, message: error.message } : FAIL;
+    return { ok: true };
   } catch {
     return FAIL;
   }
@@ -104,3 +109,19 @@ export async function checkLocation(): Promise<LocationState> {
   })();
   return Promise.race([ask, giveUp]);
 }
+
+// Change an open offer's title and details. The price, platforms, city and timing stay as they are.
+export async function editOffer(id: string, title: string, description: string): Promise<{ ok: true } | Failure> {
+  try {
+    const { error } = await supabase.rpc("edit_offer", { p_offer: id, p_title: title, p_description: description });
+    if (error) return error.code === "P0001" && error.message ? { ok: false, message: error.message } : FAIL;
+    return { ok: true };
+  } catch {
+    return FAIL;
+  }
+}
+
+// Hand-off for "Post again": the Offers tab leaves a copy here and the Post tab picks it up.
+let pendingOffer: Offer | null = null;
+export const setPendingOffer = (o: Offer) => { pendingOffer = o; };
+export const takePendingOffer = () => { const o = pendingOffer; pendingOffer = null; return o; };

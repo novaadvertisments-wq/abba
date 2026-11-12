@@ -11,18 +11,44 @@ import {
   Animated,
   Easing,
   Image,
+  ImageSourcePropType,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from "react-native";
 
 import { homeFor, useAuth } from "@/lib/auth";
-import { art, logo, logoRatio, splashFirst } from "@/theme";
+import { logo, logoRatio, splashFirst, splashSecond } from "@/theme";
 
 const MARK_WIDTH = 150;
 const MARK_HEIGHT = MARK_WIDTH / logoRatio.mark;
 const WORD_WIDTH = 210;
 const WORD_HEIGHT = WORD_WIDTH / logoRatio.wordmark;
 const GAP = 26;
+
+// A wide picture that fills the screen's height and slowly slides sideways, so the
+// whole landscape (the wall and the building) passes by instead of one narrow strip.
+function SlidingPicture({ source, ratio, slide, from, to }: { source: ImageSourcePropType; ratio: number; slide: Animated.Value; from: number; to: number }) {
+  const win = useWindowDimensions();
+  const width = win.width || 390;
+  const height = win.height || 800;
+  const picW = Math.round(Math.max(height * ratio, width));
+  const room = picW - width; // how far the picture can slide
+  return (
+    <Animated.View
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: picW,
+        height,
+        transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [-room * from, -room * to] }) }],
+      }}
+    >
+      <Image source={source} resizeMode="cover" style={{ width: picW, height }} />
+    </Animated.View>
+  );
+}
 
 export default function Splash() {
   const router = useRouter();
@@ -87,29 +113,22 @@ export default function Splash() {
   // The mark starts in the middle of the screen, then moves up by this much
   // to make room for the name.
   const startOffset = (GAP + WORD_HEIGHT) / 2;
-  const scale = zoom.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
+  const scale = zoom.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] });
 
   return (
     <View style={styles.screen}>
       {/* Second picture sits underneath; the first one melts away on top of it */}
-      <Animated.Image
-        source={art.auth}
-        resizeMode="cover"
-        style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", transform: [{ scale }] }]}
-      />
-      <Animated.Image
-        source={splashFirst}
-        resizeMode="cover"
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale }] }]}>
+        <SlidingPicture source={splashSecond} ratio={830 / 461} slide={zoom} from={0.05} to={0.75} />
+      </Animated.View>
+      <Animated.View
         style={[
           StyleSheet.absoluteFill,
-          {
-            width: "100%",
-            height: "100%",
-            opacity: Animated.multiply(firstIn, melt.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })),
-            transform: [{ scale }],
-          },
+          { opacity: Animated.multiply(firstIn, melt.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })), transform: [{ scale }] },
         ]}
-      />
+      >
+        <SlidingPicture source={splashFirst} ratio={833 / 464} slide={zoom} from={0} to={0.8} />
+      </Animated.View>
       {/* A dark veil keeps the white logo easy to see on the bright pictures */}
       <View pointerEvents="none" style={styles.veil} />
 
@@ -151,7 +170,7 @@ const styles = StyleSheet.create({
   },
   veil: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.58)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   center: {
     ...StyleSheet.absoluteFill,
