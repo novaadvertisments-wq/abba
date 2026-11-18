@@ -18,6 +18,9 @@ export const PRICE_PER_LUMEN_GHS = {
 // Snapchat Stories: GHS 150 per 1,000 viewers (provisional, decided 16 Nov 2026). The real prices come from market research.
 export const SERVICE_PRICE_PER_LUMEN_GHS: Record<string, number> = {
   snapchat: 150,
+  // Instagram Stories: 1,000 views are harder to reach on Instagram, so a lumen costs twice as much (owner's idea, 18 Nov 2026):
+  // the same money buys 500 views instead of 1,000. A placeholder until the pricing research day.
+  instagram: 300,
 };
 const pricePerLumen = (service: string, fallback: number) => SERVICE_PRICE_PER_LUMEN_GHS[service] ?? fallback;
 

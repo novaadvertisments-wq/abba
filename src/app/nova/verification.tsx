@@ -376,7 +376,7 @@ function AccountCheck({ userId, account, reloadKey, onBack }: { userId: string; 
               {info === "profile" && guide("profile")}
               <Text style={styles.body}>
                 Open your {platform} profile and take a screenshot. It must show your name, your followers and the views on your recent posts
-                ({platform === "X" ? "at least 3 posts" : "at least 6 posts"}). We use it to work out your price. Once it is accepted, your ABBA poster
+                ({platform === "X" ? "3 or more is best" : "6 or more is best"}; if you have fewer, show what you have). We use it to work out your price. Once it is accepted, your ABBA poster
                 appears here.
               </Text>
               <Text style={styles.meta}>Your poster code is already reserved. Send this soon, because the poster lasts 24 hours from now.</Text>
@@ -465,9 +465,12 @@ function AccountCheck({ userId, account, reloadKey, onBack }: { userId: string; 
                 shots
                   .filter((x) => SHOT_KINDS.some((k) => k.id === x.kind))
                   .map((x) => (
-                    <Text key={x.id} style={styles.body}>
-                      {SHOT_KINDS.find((k) => k.id === x.kind)?.label} · {OUTCOME_TEXT[x.outcome] ?? "Checking"}
-                    </Text>
+                    <View key={x.id}>
+                      <Text style={styles.body}>
+                        {SHOT_KINDS.find((k) => k.id === x.kind)?.label} · {OUTCOME_TEXT[x.outcome] ?? "Checking"}
+                      </Text>
+                      {x.note ? <Text style={styles.meta}>A person wrote: {x.note}</Text> : null}
+                    </View>
                   ))}
               {checking && <Text style={styles.meta}>{WAIT_NOTE}</Text>}
             </Card>

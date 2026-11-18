@@ -119,20 +119,29 @@ export const logoRatio = {
 // and quiet, so they only ever act as a background.
 export const art = {
   auth: require("../assets/graffiti/pano-lighthouse.jpg"), // login, welcome and sign-up (wide picture)
-  home: require("../assets/graffiti/graffiti-home.jpg"),
-  campaigns: require("../assets/graffiti/graffiti-campaigns.jpg"),
-  verify: require("../assets/graffiti/graffiti-verify.jpg"),
-  profile: require("../assets/graffiti/graffiti-profile.jpg"),
+  // Photographs from Pixabay (18 Nov 2026), resized for the phone. Credits are in artCredit below.
+  home: require("../assets/graffiti/photo-boat.jpg"), // a canoe with the Ghana flag
+  campaigns: require("../assets/graffiti/photo-castle.jpg"), // Elmina Castle
+  verify: require("../assets/graffiti/photo-mosque.jpg"), // Larabanga Mosque
+  profile: require("../assets/graffiti/photo-harbour.jpg"), // fishing boats at the harbour
 };
 export type ArtName = keyof typeof art;
 
 // How much black goes over each picture so the words stay easy to read.
 export const artVeil: Record<ArtName, number> = {
   auth: 0.5,
-  home: 0.55,
-  campaigns: 0.55,
-  verify: 0.4,
-  profile: 0.6,
+  home: 0.5,
+  campaigns: 0.5,
+  verify: 0.5,
+  profile: 0.62,
+};
+
+// The small credit shown at the very bottom of each picture. The wide login pictures are the owner's own.
+export const artCredit: Partial<Record<ArtName, string>> = {
+  home: "Photo by JD8727 on Pixabay",
+  campaigns: "Photo by Afrikit-Africa on Pixabay",
+  verify: "Photo by Afrikit-Africa on Pixabay",
+  profile: "Photo by Afrikit-Africa on Pixabay",
 };
 
 // The first picture of the opening animation (the second one is art.auth).

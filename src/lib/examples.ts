@@ -35,7 +35,7 @@ export function guideLines(service: string, kind: ShotKind, appName: string): st
     return [
       `Open your ${appName} profile page.`,
       "Make sure your name, your followers and the views on your recent posts are all on the screen.",
-      base === "x" ? "Show at least 3 recent posts." : "Show at least 6 recent posts.",
+      base === "x" ? "Show your recent posts, 3 or more is best." : "Show your recent posts, 6 or more is best. If you have fewer, show what you have.",
       "Take a screenshot. Do not edit it.",
     ];
   }

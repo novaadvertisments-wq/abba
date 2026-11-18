@@ -37,7 +37,7 @@ export type Check = {
 
 // What the Nova may see about a screenshot: only an outcome, never the reasons.
 export type Outcome = "checking" | "accepted" | "retry" | "review" | "foul";
-export type Shot = { id: string; kind: ShotKind; created_at: string; outcome: Outcome };
+export type Shot = { id: string; kind: ShotKind; created_at: string; outcome: Outcome; note?: string | null };
 
 // Where one box (poster views, or my own post) stands: what can be sent now.
 export type BoxState = "open" | "checking" | "wait" | "retry" | "accepted" | "review" | "foul";
@@ -214,3 +214,80 @@ export async function readPendingShots(): Promise<void> {
     // ignore
   }
 }
+
+
+// ---- Day 15: the human review queue (only for reviewers; the database checks who is one) ----
+
+export type ReviewItem = {
+  shot_id: string;
+  kind: ShotKind;
+  created_at: string;
+  outcome: "review" | "foul";
+  flags: string[];
+  file_path: string;
+  poster_code: string;
+  service: string;
+  handle: string;
+  followers: number;
+  avg_views: number;
+  nova_name: string | null;
+  ai_result: Record<string, unknown> | null;
+};
+
+export async function isReviewer(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc("is_reviewer");
+    return !error && data === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function loadQueue(): Promise<{ ok: true; items: ReviewItem[] } | Failure> {
+  try {
+    const { data, error } = await supabase.rpc("review_queue");
+    if (error) return fromError(error);
+    return { ok: true, items: (data ?? []) as ReviewItem[] };
+  } catch {
+    return FAIL;
+  }
+}
+
+export async function shotUrl(path: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.storage.from("verification-shots").createSignedUrl(path, 600);
+    return error ? null : data.signedUrl;
+  } catch {
+    return null;
+  }
+}
+
+export async function decideShot(
+  shotId: string,
+  decision: "approve" | "reject",
+  note: string,
+  cheating = false,
+): Promise<{ ok: true } | Failure> {
+  try {
+    const { error } = await supabase.rpc("review_decide", { p_shot: shotId, p_decision: decision, p_note: note, p_cheating: cheating });
+    if (error) return fromError(error);
+    return { ok: true };
+  } catch {
+    return FAIL;
+  }
+}
+
+// What a flag means, in plain words, for the reviewer.
+export const FLAG_TEXT: Record<string, string> = {
+  looks_edited: "The AI thinks the picture was edited",
+  code_of_another_nova: "The code belongs to another Nova",
+  code_from_an_older_poster: "The code is from an older poster",
+  views_far_above_declared: "The views are far above what the Nova declared",
+  followers_far_from_declared: "The followers are far from what the Nova declared",
+  views_sent_very_soon_after_poster: "Sent very soon after the poster",
+  ai_unavailable: "The AI could not read it",
+  handle_mismatch: "The handle does not match the account",
+  handle_not_seen: "No handle could be seen",
+  followers_unreadable: "The followers could not be read",
+  no_posts_read: "No post views could be read",
+};

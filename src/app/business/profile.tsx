@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
+import { isReviewer } from "@/lib/verification";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { FormMessage } from "@/components/FormMessage";
@@ -19,6 +21,11 @@ import { checkBusinessName, checkDescription } from "@/lib/validation";
 import { categoryColors, colors, radius, spacing, textOnArt, typography } from "@/theme";
 
 export default function BusinessProfile() {
+  const router = useRouter();
+  const [reviewer, setReviewer] = useState(false);
+  useEffect(() => {
+    isReviewer().then(setReviewer);
+  }, []);
   const { profile, email } = useAuth();
   const userId = profile?.id ?? "";
 
@@ -222,6 +229,7 @@ export default function BusinessProfile() {
               </>
             )}
 
+            {reviewer ? <Button title="Review screenshots" variant="secondary" onPress={() => router.push("/review")} style={{ marginTop: spacing.lg }} /> : null}
             <Button title="Log out" variant="secondary" onPress={logOut} style={{ marginTop: spacing.lg }} />
           </ScrollView>
         </KeyboardAvoidingView>

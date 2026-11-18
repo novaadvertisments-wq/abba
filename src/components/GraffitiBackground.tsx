@@ -1,9 +1,9 @@
 import { ReactNode } from "react";
 
 import { Panorama } from "@/components/Panorama";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
-import { ArtName, art, artVeil, colors, tabTint } from "@/theme";
+import { ArtName, art, artCredit, artVeil, colors, tabTint } from "@/theme";
 
 type Props = {
   children: ReactNode;
@@ -34,10 +34,17 @@ export function GraffitiBackground({ children, variant = "auth", strength = 1 }:
       {/* The pictures are bright and colourful, so a dark veil keeps the words easy to read. */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${artVeil[variant]})` }]} />
       {children}
+      {artCredit[variant] ? (
+        <Text pointerEvents="none" style={styles.credit} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {artCredit[variant]}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  // Very small, at the very bottom, so it never gets in the way.
+  credit: { position: "absolute", bottom: 2, left: 0, right: 0, textAlign: "center", fontSize: 9, color: "rgba(255,255,255,0.55)", textShadowColor: "#000", textShadowRadius: 3 },
 });

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -11,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
+import { isReviewer } from "@/lib/verification";
 import { Card } from "@/components/Card";
 import { Checkbox } from "@/components/Checkbox";
 import { Chip } from "@/components/Chip";
@@ -46,6 +48,11 @@ import {
 import { colors, radius, spacing, textOnArt, tiers, typography } from "@/theme";
 
 export default function NovaProfile() {
+  const router = useRouter();
+  const [reviewer, setReviewer] = useState(false);
+  useEffect(() => {
+    isReviewer().then(setReviewer);
+  }, []);
   const { profile, email } = useAuth();
   const userId = profile?.id ?? "";
 
@@ -456,6 +463,7 @@ export default function NovaProfile() {
             </>
           )}
 
+          {reviewer ? <Button title="Review screenshots" variant="secondary" onPress={() => router.push("/review")} style={{ marginTop: spacing.lg }} /> : null}
           <Button title="Log out" variant="secondary" onPress={logOut} style={{ marginTop: spacing.lg }} />
         </ScrollView>
       </KeyboardAvoidingView>
