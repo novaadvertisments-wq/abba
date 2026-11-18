@@ -49,6 +49,7 @@ export default function NovaLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="poster" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen
         name="profile"
         options={{

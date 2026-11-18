@@ -106,6 +106,9 @@ export const logo = {
   wordmarkBlack: require("../../assets/images/abba-wordmark-black.png"),
 };
 
+// The full-screen ABBA poster picture (the Nova's details are drawn on top of it).
+export const posterTemplate = require("../../assets/images/poster-template.jpg");
+
 // Shapes of the logo images (width / height) so we can size them correctly.
 export const logoRatio = {
   mark: 399 / 333,

@@ -125,12 +125,12 @@ export default function FindNovas() {
     setMode("form");
   };
 
-  const recommended = lumens && kind ? recommendPrice(lumens, kind, platforms.length, duration) : 0;
+  const recommended = lumens && kind ? recommendPrice(lumens, kind, platforms.length, duration, platforms) : 0;
 
   // Whenever the reach, type or platforms change, suggest a new price
   // (the business can still type its own).
-  const suggest = (l: number | null, k: OfferKind | "", count: number, d: number = duration) => {
-    if (l && k) setBudget(String(recommendPrice(l, k, count, d)));
+  const suggest = (l: number | null, k: OfferKind | "", count: number, d: number = duration, svc: string[] = platforms) => {
+    if (l && k) setBudget(String(recommendPrice(l, k, count, d, svc)));
   };
 
   const chooseKind = (k: OfferKind) => {
@@ -138,7 +138,7 @@ export default function FindNovas() {
     const next = k === "single" ? platforms.slice(0, 1) : platforms;
     setPlatforms(next);
     setErrors((e) => ({ ...e, kind: undefined, platforms: undefined }));
-    suggest(lumens, k, next.length);
+    suggest(lumens, k, next.length, duration, next);
   };
 
   const chooseLumens = (l: number) => {
@@ -156,7 +156,7 @@ export default function FindNovas() {
         : [...platforms, id];
     setPlatforms(next);
     setErrors((e) => ({ ...e, platforms: undefined }));
-    suggest(lumens, kind, next.length);
+    suggest(lumens, kind, next.length, duration, next);
   };
 
   const chosenCity = cityPick === "Other" ? otherCity.trim() : cityPick;
@@ -323,8 +323,9 @@ export default function FindNovas() {
                       {PLATFORMS.map((p) => (
                         <Chip
                           key={p.id}
-                          label={p.label}
+                          label={p.comingSoon ? `${p.label} (soon)` : p.label}
                           selected={platforms.includes(p.id)}
+                          disabled={p.comingSoon}
                           onPress={() => togglePlatform(p.id)}
                         />
                       ))}

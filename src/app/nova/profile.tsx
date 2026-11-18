@@ -377,9 +377,9 @@ export default function NovaProfile() {
                         {PLATFORMS.map((p) => (
                           <Chip
                             key={p.id}
-                            label={p.label}
+                            label={p.comingSoon ? `${p.label} (soon)` : p.label}
                             selected={platform === p.id}
-                            disabled={usedPlatforms.includes(p.id)}
+                            disabled={usedPlatforms.includes(p.id) || p.comingSoon}
                             onPress={() => {
                               setPlatform(p.id);
                               setErrors((e) => ({ ...e, platform: undefined }));

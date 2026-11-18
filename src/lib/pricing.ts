@@ -14,6 +14,13 @@ export const PRICE_PER_LUMEN_GHS = {
   multi: 40, // each platform in a multi-platform offer
 };
 
+// PLACEHOLDER price of one lumen for each service, in GHS. Services not listed here use the single price above.
+// Snapchat Stories: GHS 150 per 1,000 viewers (provisional, decided 16 Nov 2026). The real prices come from market research.
+export const SERVICE_PRICE_PER_LUMEN_GHS: Record<string, number> = {
+  snapchat: 150,
+};
+const pricePerLumen = (service: string, fallback: number) => SERVICE_PRICE_PER_LUMEN_GHS[service] ?? fallback;
+
 export const LUMEN_OPTIONS = [1, 2, 3, 5, 10, 20];
 
 export type OfferKind = "single" | "multi";
@@ -37,10 +44,16 @@ export function recommendPrice(
   kind: OfferKind,
   platformCount: number,
   durationDays: number = 1,
+  services: string[] = [],
 ): number {
-  const count = kind === "multi" ? Math.max(platformCount, 2) : 1;
   const factor = DURATION_FACTOR[durationDays] ?? 1;
-  return Math.round(lumens * PRICE_PER_LUMEN_GHS[kind] * count * factor);
+  if (kind === "multi") {
+    // Each service in a multi-service offer is priced on its own, at the multi rate.
+    const list = services.length >= 2 ? services : new Array(Math.max(platformCount, 2)).fill("");
+    const perLumenTotal = list.reduce((sum, sv) => sum + pricePerLumen(sv, PRICE_PER_LUMEN_GHS.single) * (PRICE_PER_LUMEN_GHS.multi / PRICE_PER_LUMEN_GHS.single), 0);
+    return Math.round(lumens * perLumenTotal * factor);
+  }
+  return Math.round(lumens * pricePerLumen(services[0] ?? "", PRICE_PER_LUMEN_GHS.single) * factor);
 }
 
 // A business can ask for the post to go up within this many days of agreeing (up to 30).

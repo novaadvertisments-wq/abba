@@ -147,7 +147,7 @@ export function GroupForm({ userId, profileCity, initial, onPosted, onCancel }: 
 
       <Text style={styles.heading}>Which platform?</Text>
       <View style={styles.chips}>
-        {PLATFORMS.map((p) => (
+        {PLATFORMS.filter((p) => p.groupOk).map((p) => (
           <Chip key={p.id} label={p.label} selected={platform === p.id} onPress={() => { setPlatform(p.id); setErrors((e) => ({ ...e, platform: undefined })); }} />
         ))}
       </View>

@@ -10,20 +10,63 @@ export type Platform =
   | "facebook"
   | "snapchat"
   | "youtube"
-  | "whatsapp";
+  | "whatsapp"
+  | "instagram_post"
+  | "tiktok_demo"
+  | "instagram_demo";
 
-export const PLATFORMS: { id: Platform; label: string; followersLabel: string; handleLabel: string; viewsLabel: string }[] = [
-  { id: "instagram", label: "Instagram", followersLabel: "Followers", handleLabel: "Instagram handle", viewsLabel: "Average story views" },
-  { id: "tiktok", label: "TikTok", followersLabel: "Followers", handleLabel: "TikTok handle", viewsLabel: "Average views per video" },
-  { id: "x", label: "X", followersLabel: "Followers", handleLabel: "X handle", viewsLabel: "Average views per post" },
-  { id: "facebook", label: "Facebook", followersLabel: "Followers", handleLabel: "Page or profile name", viewsLabel: "Average story views" },
-  { id: "snapchat", label: "Snapchat", followersLabel: "Followers", handleLabel: "Snapchat username", viewsLabel: "Average story views" },
-  { id: "youtube", label: "YouTube", followersLabel: "Subscribers", handleLabel: "Channel name", viewsLabel: "Average views per video" },
-  { id: "whatsapp", label: "WhatsApp Status", followersLabel: "Contacts who see your status", handleLabel: "WhatsApp number", viewsLabel: "Average status views" },
+// A "service" is what a Nova does on a platform. The id of an existing platform keeps its old meaning so nothing
+// saved earlier breaks: instagram = Instagram Stories, tiktok = TikTok Posts, x = X Posts, and so on.
+// kind: story = measured in lumens (average views), post = measured by followers and recent views (Day 14g),
+// demo = a demonstrative ad. comingSoon services are listed but cannot be chosen yet.
+export type ServiceKind = "story" | "post" | "demo";
+
+export const PLATFORMS: {
+  id: Platform;
+  label: string;
+  kind: ServiceKind;
+  base: string; // the platform itself, for the poster and the screenshot check
+  groupOk: boolean; // may be used in group campaigns (stories and status only, for now)
+  comingSoon?: boolean;
+  followersLabel: string;
+  handleLabel: string;
+  viewsLabel: string;
+}[] = [
+  { id: "snapchat", label: "Snapchat Stories", kind: "story", base: "snapchat", groupOk: true, followersLabel: "Followers", handleLabel: "Snapchat username", viewsLabel: "Average story views" },
+  { id: "instagram", label: "Instagram Stories", kind: "story", base: "instagram", groupOk: true, followersLabel: "Followers", handleLabel: "Instagram handle", viewsLabel: "Average story views" },
+  { id: "instagram_post", label: "Instagram Posts", kind: "post", base: "instagram", groupOk: false, comingSoon: true, followersLabel: "Followers", handleLabel: "Instagram handle", viewsLabel: "Average views on recent posts" },
+  { id: "whatsapp", label: "WhatsApp Status", kind: "story", base: "whatsapp", groupOk: true, followersLabel: "Contacts who see your status", handleLabel: "WhatsApp number", viewsLabel: "Average status views" },
+  { id: "tiktok", label: "TikTok Posts", kind: "post", base: "tiktok", groupOk: false, followersLabel: "Followers", handleLabel: "TikTok handle", viewsLabel: "Average views on recent posts" },
+  { id: "x", label: "X Posts", kind: "post", base: "x", groupOk: false, followersLabel: "Followers", handleLabel: "X handle", viewsLabel: "Average views on recent posts" },
+  { id: "facebook", label: "Facebook Stories", kind: "story", base: "facebook", groupOk: true, followersLabel: "Followers", handleLabel: "Page or profile name", viewsLabel: "Average story views" },
+  { id: "instagram_demo", label: "Instagram Demonstrative Ads", kind: "demo", base: "instagram", groupOk: false, comingSoon: true, followersLabel: "Followers", handleLabel: "Instagram handle", viewsLabel: "Average views" },
+  { id: "tiktok_demo", label: "TikTok Demonstrative Ads", kind: "demo", base: "tiktok", groupOk: false, comingSoon: true, followersLabel: "Followers", handleLabel: "TikTok handle", viewsLabel: "Average views" },
 ];
 
+const BASE_NAMES: Record<string, string> = {
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  x: "X",
+  facebook: "Facebook",
+  snapchat: "Snapchat",
+  youtube: "YouTube",
+  whatsapp: "WhatsApp",
+};
+
+// The service as a person reads it, for example "TikTok Posts".
+// YouTube is no longer offered, but accounts saved earlier still show their name.
 export function platformLabel(id: string): string {
-  return PLATFORMS.find((p) => p.id === id)?.label ?? id;
+  return PLATFORMS.find((p) => p.id === id)?.label ?? BASE_NAMES[id] ?? id;
+}
+
+// Just the platform, for example "TikTok" (used on the poster and in messages about screenshots).
+export function platformName(id: string): string {
+  const base = PLATFORMS.find((p) => p.id === id)?.base ?? id.split("_")[0];
+  return BASE_NAMES[base] ?? base;
+}
+
+export function serviceKind(id: string): ServiceKind {
+  return PLATFORMS.find((p) => p.id === id)?.kind ?? "story";
 }
 
 export const CITIES = ["Accra", "Kumasi", "Tamale", "Takoradi", "Cape Coast", "Other"];
