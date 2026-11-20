@@ -107,6 +107,7 @@ export const logo = {
 };
 
 // The full-screen ABBA poster picture (the Nova's details are drawn on top of it).
+export const posterThumb = require("../../assets/images/poster-thumb.jpg");
 export const posterTemplate = require("../../assets/images/poster-template.jpg");
 
 // Shapes of the logo images (width / height) so we can size them correctly.

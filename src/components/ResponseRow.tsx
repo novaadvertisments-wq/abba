@@ -7,6 +7,7 @@ import { FormMessage } from "@/components/FormMessage";
 import { DealFilesEditor } from "@/components/DealFilesEditor";
 import { Response, postByText, respond } from "@/lib/negotiation";
 import { MAX_COUNTERS } from "@/lib/pricing";
+import { NovaCard, lumensText, ratingText } from "@/lib/score";
 import { shortNumber } from "@/lib/validation";
 import { Avatar } from "@/components/Avatar";
 import { pictureUrl } from "@/lib/pictures";
@@ -14,7 +15,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { colors, gold, radius, spacing, statusColors, tiers, typography } from "@/theme";
 
 // One Nova's answer to one of your offers, with the buttons to reply.
-export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => void }) {
+export function ResponseRow({ r, card, onChanged }: { r: Response; card?: NovaCard; onChanged: () => void }) {
   const [countering, setCountering] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,12 +45,17 @@ export function ResponseRow({ r, onChanged }: { r: Response; onChanged: () => vo
   return (
     <View style={styles.row}>
       <View style={styles.who}>
-        <Avatar uri={pictureUrl(r.nova_avatar)} name={who} size={40} ring={tiers.spark.color} />
+        <Avatar uri={pictureUrl(r.nova_avatar)} name={who} size={40} ring={tiers[card?.tier ?? "spark"].color} />
         <Text style={[styles.name, styles.whoText]}>
           {who}
           {r.nova_city ? ` · ${r.nova_city}` : ""}
         </Text>
       </View>
+      {card ? (
+        <Text style={styles.meta}>
+          {tiers[card.tier].label} · {card.verified ? `${lumensText(card.lumens)} Lumens` : "Not verified yet"} · {ratingText(card.rating_avg, card.rating_count)}
+        </Text>
+      ) : null}
       {!!r.accounts && <Text style={styles.meta}>{r.accounts}</Text>}
       <Text style={styles.meta}>
         {r.nova_views

@@ -29,19 +29,22 @@ import {
   readPendingShots,
   sendScreenshot,
 } from "@/lib/verification";
+import { LumensCard } from "@/components/LumensCard";
 import { exampleImage, guideLines } from "@/lib/examples";
+import { MyScore, loadMyScore, lumensText } from "@/lib/score";
 import { shortNumber } from "@/lib/validation";
-import { colors, posterTemplate, spacing, textOnArt, typography } from "@/theme";
+import { colors, posterTemplate, posterThumb, spacing, textOnArt, typography } from "@/theme";
 
 // The Rank tab. It holds the reach check: two rounds. Round 1 is the full check. Round 2 is one easy screenshot
 // of a second poster, on a day ABBA picks and tells the Nova straight away.
-// Lumens, tier and trust rating arrive on Day 16, built on the numbers read from these screenshots.
+// Lumens, tier, place and trust rating (Day 16) are built on the numbers read from these screenshots.
 export default function NovaVerification() {
   const { profile } = useAuth();
   const userId = profile?.id ?? "";
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<NovaAccount[]>([]);
   const [checks, setChecks] = useState<Check[]>([]);
+  const [score, setScore] = useState<MyScore | null>(null);
   const [openId, setOpenId] = useState("");
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -50,7 +53,8 @@ export default function NovaVerification() {
   const refresh = useCallback(async () => {
     if (!userId) return;
     readPendingShots(); // quietly asks again for any screenshot that was not read yet
-    const [p, v] = await Promise.all([loadNovaProfile(userId), loadChecks()]);
+    const [p, v, sc] = await Promise.all([loadNovaProfile(userId), loadChecks(), loadMyScore()]);
+    if (sc) setScore(sc);
     if (p.ok) setAccounts(p.accounts);
     else setError("We could not load your accounts. Pull down to refresh.");
     if (v.ok) setChecks(v.checks);
@@ -95,9 +99,10 @@ export default function NovaVerification() {
             />
           ) : (
             <>
+              {score && <LumensCard score={score} />}
               <Text style={styles.hint}>
-                Businesses pay for real views, so ABBA checks yours in two easy rounds. Post the ABBA poster, send two screenshots, then one more
-                on a day we pick. Your Lumens, tier and trust rating come next.
+                Businesses pay for real views, so ABBA checks yours. Post the ABBA poster and send the screenshots it asks for. Your Lumens, tier and
+                rating grow from what is accepted.
               </Text>
               <FormMessage message={error} />
               {loading ? (
@@ -115,7 +120,11 @@ export default function NovaVerification() {
                         {platformLabel(a.platform)} · @{a.handle.replace(/^@/, "")}
                       </Text>
                       <Text style={styles.meta}>
-                        {a.avg_views > 0 ? `You say your usual views are ${shortNumber(a.avg_views)}. Not verified yet.` : "Not verified yet."}
+                        {(() => {
+                          const sa = score?.accounts.find((x) => x.account_id === a.id);
+                          if (sa?.verified) return `Verified · ${lumensText(sa.lumens)} Lumens`;
+                          return a.avg_views > 0 ? `You say your usual views are ${shortNumber(a.avg_views)}. Not verified yet.` : "Not verified yet.";
+                        })()}
                       </Text>
                       <Text style={styles.link}>{listAction(c)}</Text>
                     </Card>
@@ -387,7 +396,7 @@ function AccountCheck({ userId, account, reloadKey, onBack }: { userId: string; 
             <>
               <Card style={styles.card}>
                 <View style={styles.posterHead}>
-                  <Image source={posterTemplate} style={styles.posterThumb} resizeMode="cover" />
+                  <Image source={posterThumb} style={styles.posterThumb} resizeMode="cover" />
                   <View style={styles.posterInfo}>
                     <Text style={styles.cardTitle}>{asPost ? "Your ABBA poster" : "Your ABBA poster"}</Text>
                     <Text style={styles.meta}>Good until {posterDate(check.expires_at)}, for 24 hours.</Text>

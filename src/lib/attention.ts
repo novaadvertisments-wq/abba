@@ -5,27 +5,35 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 
-import { loadNovaGroups } from "./groups";
-import { loadFeed, loadResponses } from "./negotiation";
+import { NovaGroup, loadNovaGroups } from "./groups";
+import { FeedOffer, loadFeed, loadResponses } from "./negotiation";
 
-const listeners = new Set<() => void>();
+type Shared = { offers?: FeedOffer[]; groups?: NovaGroup[] };
+const listeners = new Set<(shared?: Shared) => void>();
 
 // Screens call this after they load, so the badge updates straight away.
-export function pingBadges() {
-  listeners.forEach((l) => l());
+// A screen that has just fetched the lists can hand them over, so the badge does not fetch them again.
+export function pingBadges(shared?: Shared) {
+  listeners.forEach((l) => l(shared));
 }
 
 export function useAttentionCount(role: "nova" | "business", enabled: boolean): number {
   const [count, setCount] = useState(0);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (shared?: Shared) => {
     if (role === "nova") {
-      const [r, g] = await Promise.all([loadFeed(), loadNovaGroups()]);
-      if (r.ok) {
-        const offers = r.offers.filter(
+      let offersList = shared?.offers;
+      let groupsList = shared?.groups;
+      if (!offersList || !groupsList) {
+        const [r, g] = await Promise.all([loadFeed(), loadNovaGroups()]);
+        offersList = r.ok ? r.offers : undefined;
+        groupsList = g.ok ? g.groups : [];
+      }
+      if (offersList) {
+        const offers = offersList.filter(
           (o) => o.offer_status === "open" && (o.neg_status === null || o.neg_status === "pending_nova"),
         ).length;
-        const groups = g.ok ? g.groups.filter((x) => x.status === "open" && !x.joined).length : 0;
+        const groups = (groupsList ?? []).filter((x) => x.status === "open" && !x.joined).length;
         setCount(offers + groups);
       }
     } else {
@@ -42,7 +50,7 @@ export function useAttentionCount(role: "nova" | "business", enabled: boolean): 
       return;
     }
     refresh();
-    const timer = setInterval(refresh, 30000);
+    const timer = setInterval(() => refresh(), 30000);
     listeners.add(refresh);
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") refresh();

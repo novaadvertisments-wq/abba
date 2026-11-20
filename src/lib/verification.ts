@@ -147,6 +147,9 @@ async function readPickedBytes(uri: string): Promise<ArrayBuffer> {
   return best;
 }
 
+// Slightly squeezed so uploads are smaller on slow networks; the poster code stays readable.
+const SHOT_QUALITY = 0.85;
+
 // Opens the gallery, checks the picture, uploads it, then records it (the database runs its checks).
 // Returns "received" (never a flag), or null if the person closed the gallery without choosing.
 export async function sendScreenshot(
@@ -156,7 +159,7 @@ export async function sendScreenshot(
 ): Promise<{ ok: true; status: "received" | null } | Failure> {
   let uploadedPath = "";
   try {
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1 });
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: SHOT_QUALITY });
     if (picked.canceled || !picked.assets?.[0]) return { ok: true, status: null };
     const asset = picked.assets[0];
     const mime = asset.mimeType === "image/png" || asset.mimeType === "image/webp" ? asset.mimeType : "image/jpeg";
@@ -169,7 +172,11 @@ export async function sendScreenshot(
     const hash = fingerprint(new Uint8Array(buffer));
     const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
     const path = `${userId}/${hash}.${ext}`;
-    const up = await supabase.storage.from("verification-shots").upload(path, buffer, { contentType: mime });
+    let up = await supabase.storage.from("verification-shots").upload(path, buffer, { contentType: mime });
+    // One quiet retry: slow networks often drop the first attempt.
+    if (up.error && /network|fetch|timeout|failed/i.test(up.error.message)) {
+      up = await supabase.storage.from("verification-shots").upload(path, buffer, { contentType: mime });
+    }
     if (up.error) {
       // The same file chosen twice lands on the same path, which the storage reports as "already exists".
       const dup = /exist|duplicate/i.test(up.error.message);

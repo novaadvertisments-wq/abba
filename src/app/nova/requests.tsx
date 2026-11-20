@@ -163,7 +163,7 @@ export default function NovaRequests() {
     }
     setLoading(false);
     setRefreshing(false);
-    pingBadges();
+    pingBadges(r.ok && gr.ok ? { offers: r.offers, groups: gr.groups } : undefined);
   }, []);
 
   useFocusEffect(

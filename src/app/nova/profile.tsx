@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
 import { isReviewer } from "@/lib/verification";
+import { loadMyScore } from "@/lib/score";
 import { Card } from "@/components/Card";
 import { Checkbox } from "@/components/Checkbox";
 import { Chip } from "@/components/Chip";
@@ -45,13 +46,15 @@ import {
   parseFollowers,
   shortNumber,
 } from "@/lib/validation";
-import { colors, radius, spacing, textOnArt, tiers, typography } from "@/theme";
+import { TierName, colors, radius, spacing, textOnArt, tiers, typography } from "@/theme";
 
 export default function NovaProfile() {
   const router = useRouter();
   const [reviewer, setReviewer] = useState(false);
+  const [myTier, setMyTier] = useState<TierName>("spark");
   useEffect(() => {
     isReviewer().then(setReviewer);
+    loadMyScore().then((s) => s && setMyTier(s.tier));
   }, []);
   const { profile, email } = useAuth();
   const userId = profile?.id ?? "";
@@ -234,7 +237,7 @@ export default function NovaProfile() {
           <Text style={styles.signedIn}>
             {profile?.full_name} ({email})
           </Text>
-          <ProfileHeader userId={profile?.id ?? ""} name={profile?.full_name ?? ""} ring={tiers.spark.color} subtitle={`${tiers.spark.label} Nova`} />
+          <ProfileHeader userId={profile?.id ?? ""} name={profile?.full_name ?? ""} ring={tiers[myTier].color} subtitle={`${tiers[myTier].label} Nova`} />
 
           {loading ? (
             <View style={styles.gap} accessibilityLabel="Loading your profile">

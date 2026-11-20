@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -9,6 +9,7 @@ import { EditOfferBox } from "@/components/EditOfferBox";
 import { FormMessage } from "@/components/FormMessage";
 import { GraffitiBackground } from "@/components/GraffitiBackground";
 import { ResponseRow } from "@/components/ResponseRow";
+import { NovaCard, loadNovaCards } from "@/lib/score";
 import { SkeletonCard } from "@/components/Skeleton";
 import { StatusPill } from "@/components/StatusPill";
 import { pingBadges } from "@/lib/attention";
@@ -30,7 +31,9 @@ export default function BusinessOffers() {
   const [loadError, setLoadError] = useState("");
   const [offers, setOffers] = useState<Offer[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
+  const [cards, setCards] = useState<Record<string, NovaCard>>({});
 
+  const cardIds = useRef("");
   const refresh = useCallback(async () => {
     if (!userId) return;
     const [o, rs] = await Promise.all([loadOffers(userId), loadResponses()]);
@@ -41,7 +44,14 @@ export default function BusinessOffers() {
     }
     setLoadError("");
     setOffers(o.offers);
-    if (rs.ok) setResponses(rs.responses);
+    if (rs.ok) {
+      setResponses(rs.responses);
+      const ids = Array.from(new Set(rs.responses.map((r) => r.nova_id))).sort().join(",");
+      if (ids !== cardIds.current) {
+        cardIds.current = ids;
+        loadNovaCards(rs.responses.map((r) => r.nova_id)).then(setCards);
+      }
+    }
     setLoading(false);
     pingBadges();
   }, [userId]);
@@ -132,7 +142,7 @@ export default function BusinessOffers() {
                 {responses
                   .filter((r) => r.offer_id === o.id && (o.status === "open" || r.status === "agreed"))
                   .map((r) => (
-                    <ResponseRow key={r.negotiation_id} r={r} onChanged={refresh} />
+                    <ResponseRow key={r.negotiation_id} r={r} card={cards[r.nova_id]} onChanged={refresh} />
                   ))}
               </Card>
             ))
